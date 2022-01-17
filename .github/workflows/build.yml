@@ -1,0 +1,26 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+  pull_request:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go Environment
+        uses: actions/setup-go@v2
+      - name: Build
+        run: go build CIHunter
