@@ -5,6 +5,9 @@ import (
 	"CIHunter/src/database"
 	"CIHunter/src/utils"
 	"fmt"
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/gocolly/colly"
 	"gorm.io/gorm"
 	"strconv"
@@ -120,5 +123,19 @@ func crawlGitHubRepo(href string) {
 	} else if config.NOW.Sub(repo.UpdatedAt) > config.UPDATE_DIFF {
 		// TODO update
 		fmt.Printf("update %s\n", href)
+	}
+}
+
+func analyzeRepoByGit(href string) {
+	fs := memfs.New()
+
+	git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
+		URL: "https://github.com" + href,
+	})
+
+	_, err := fs.Open(".github/workflows")
+
+	if err != nil {
+		fmt.Println("[ERROR] clone", href, "ended with", err)
 	}
 }
