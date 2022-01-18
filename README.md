@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/ZJU-SEC/CIHunter/actions/workflows/build.yml/badge.svg)](https://github.com/ZJU-SEC/CIHunter/actions/workflows/build.yml)
 
-##  Prerequisite
+## :gear: Prerequisite
 
 - Golang
 - PostgreSQL
@@ -18,7 +18,7 @@ $ docker run \
   --name postgres -d \
   -e POSTGRES_USER=ZJU-SEC \
   -e POSTGRES_PASSWORD=<YOUR DB PASSWORD> \
-  -e POSTGRES_DB=CIHunter 
+  -e POSTGRES_DB=CIHunter \
   -p 5432:5432 postgres
 ```
 
@@ -27,4 +27,11 @@ $ docker run \
 
 ```bash
 $ go build CIHunter
+```
+
+## :rocket: Run
+
+
+```bash
+$ ./CIHunter
 ```

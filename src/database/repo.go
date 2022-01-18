@@ -4,9 +4,8 @@ import "time"
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID        uint `gorm:"primaryKey"`
-	Name      string
-	Author    string
+	ID        uint   `gorm:"primaryKey"`
+	Ref       string `gorm:"uniqueIndex"`
 	UpdatedAt time.Time
 
 	ContributorCount uint

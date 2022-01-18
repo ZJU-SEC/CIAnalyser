@@ -1,9 +1,16 @@
 package config
 
-import "gopkg.in/ini.v1"
+import (
+	"gopkg.in/ini.v1"
+	"time"
+)
 
 // Config ini file of the whole application
 var Config *ini.File
+
+// APP
+var UPDATE_DIFF time.Duration
+var NOW = time.Now()
 
 // Web
 var GITHUB_TOKEN string
@@ -17,6 +24,14 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// load APP section
+	APPSection, err := Config.GetSection("APP")
+	if err != nil {
+		panic(err)
+	}
+	updateDays := APPSection.Key("UPDATE_DIFF").MustInt(7)
+	UPDATE_DIFF = time.Duration(24*updateDays) * time.Hour
 
 	// load WEB section
 	WEBSection, err := Config.GetSection("WEB")

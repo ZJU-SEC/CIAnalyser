@@ -1,9 +1,12 @@
 package crawler
 
 import (
+	"CIHunter/src/config"
+	"CIHunter/src/database"
 	"CIHunter/src/utils"
 	"fmt"
 	"github.com/gocolly/colly"
+	"gorm.io/gorm"
 	"strconv"
 	"strings"
 )
@@ -104,6 +107,18 @@ func getPageOfUserOrg(href string) int {
 }
 
 func crawlGitHubRepo(href string) {
-	// TODO parse repo
-	fmt.Println(href)
+	repo := database.Repo{}
+
+	res := database.DB.Where("Ref = ?", href).First(&repo)
+	if res.Error == gorm.ErrRecordNotFound {
+		// not found, create
+		fmt.Printf("create %s\n", href)
+		repo = database.Repo{
+			Ref: href,
+		}
+		database.DB.Create(&repo)
+	} else if config.NOW.Sub(repo.UpdatedAt) > config.UPDATE_DIFF {
+		// TODO update
+		fmt.Printf("update %s\n", href)
+	}
 }
