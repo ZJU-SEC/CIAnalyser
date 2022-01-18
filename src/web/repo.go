@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+    "gopkg.in/yaml.v3"
 )
 
 // Crawl the repositories
@@ -161,25 +162,41 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 	// clone git repo to memory
 	fs := memfs.New()
 
-	git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
+	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
 		URL: "https://github.com" + href,
-	})
+    }); err != nil { // clone error, fast return
+		return models.GitHubActionMeasure{}, nil, err
+    }
+
+	// declare variables
+	var gh_measure models.GitHubActionMeasure
+	var gh_uses []models.GitHubActionUses
 
 	// analyze workflows
-	workflows, err := fs.ReadDir(".github/workflows")
-	for _, file := range workflows {
+    workflows, err := fs.ReadDir(".github/workflows")
+    if err != nil {
+		return models.GitHubActionMeasure{}, nil, err
+    }
+
+	for _, entry := range workflows {
 		// if dir / not yml / not yaml skip
-		if file.IsDir() ||
-			filepath.Ext(file.Name()) != "yml" ||
-			filepath.Ext(file.Name()) != "yaml" {
+		if entry.IsDir() ||
+			filepath.Ext(entry.Name()) != "yml" ||
+			filepath.Ext(entry.Name()) != "yaml" {
 			continue
 		}
-		// TODO
+
+        // open yaml configuration file
+        yml, err := fs.Open(entry.Name())
+		if err != nil {
+		    return models.GitHubActionMeasure{}, nil, err
+		}
+
+        w := models.Workflow{}
+        if err := yaml.NewDecoder(yml).Decode(w); err != nil {
+		    return models.GitHubActionMeasure{}, nil, err
+        }
 	}
 
-	if err != nil {
-		fmt.Println("[ERROR] clone", href, "ended with", err)
-	}
-
-	return models.GitHubActionMeasure{}, nil, nil
+	return gh_measure, gh_uses, nil
 }
