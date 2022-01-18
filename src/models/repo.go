@@ -1,4 +1,4 @@
-package database
+package models
 
 import "time"
 
@@ -32,4 +32,5 @@ type GitHubActionUses struct {
 	ID                    uint `gorm:"primaryKey"`
 	GitHubActionMeasureID uint
 	GitHubActionMeasure   GitHubActionMeasure `gorm:"foreignKey:GitHubActionMeasureID"`
+	Uses                  string
 }

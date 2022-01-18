@@ -2,7 +2,7 @@ package crawler
 
 import (
 	"CIHunter/src/config"
-	"CIHunter/src/database"
+	"CIHunter/src/models"
 	"CIHunter/src/utils"
 	"fmt"
 	"github.com/go-git/go-billy/v5/memfs"
@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/gocolly/colly"
 	"gorm.io/gorm"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -110,32 +111,75 @@ func getPageOfUserOrg(href string) int {
 }
 
 func crawlGitHubRepo(href string) {
-	repo := database.Repo{}
+	repo := models.Repo{}
 
-	res := database.DB.Where("Ref = ?", href).First(&repo)
+	res := models.DB.Where("Ref = ?", href).First(&repo)
 	if res.Error == gorm.ErrRecordNotFound {
 		// not found, create
 		fmt.Printf("create %s\n", href)
-		repo = database.Repo{
-			Ref: href,
+
+		gh_measure, gh_uses, err := analyzeRepoByGit(href)
+		if err != nil {
+
+		} else {
+			// no error happened when analyzing repository
+			// create this repository
+			models.DB.Transaction(func(tx *gorm.DB) error {
+				repo.Ref = href
+
+				// create repository data
+				if err := tx.Create(&repo).Error; err != nil {
+					return err
+				}
+
+				// create measurement
+				gh_measure.RepoID = repo.ID
+				gh_measure.Repo = repo
+				if err := tx.Create(&gh_measure).Error; err != nil {
+					return err
+				}
+
+				// create uses data
+				for i := 0; i <= len(gh_uses); i++ {
+					gh_uses[i].GitHubActionMeasureID = gh_measure.ID
+					gh_uses[i].GitHubActionMeasure = gh_measure
+				}
+				if err := tx.Create(&gh_uses).Error; err != nil {
+					return err
+				}
+
+				return nil // commit the whole transaction
+			})
 		}
-		database.DB.Create(&repo)
 	} else if config.NOW.Sub(repo.UpdatedAt) > config.UPDATE_DIFF {
 		// TODO update
 		fmt.Printf("update %s\n", href)
 	}
 }
 
-func analyzeRepoByGit(href string) {
+func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubActionUses, error) {
+	// clone git repo to memory
 	fs := memfs.New()
 
 	git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
 		URL: "https://github.com" + href,
 	})
 
-	_, err := fs.Open(".github/workflows")
+	// analyze workflows
+	workflows, err := fs.ReadDir(".github/workflows")
+	for _, file := range workflows {
+		// if dir / not yml / not yaml skip
+		if file.IsDir() ||
+			filepath.Ext(file.Name()) != "yml" ||
+			filepath.Ext(file.Name()) != "yaml" {
+			continue
+		}
+		// TODO
+	}
 
 	if err != nil {
 		fmt.Println("[ERROR] clone", href, "ended with", err)
 	}
+
+	return models.GitHubActionMeasure{}, nil, nil
 }

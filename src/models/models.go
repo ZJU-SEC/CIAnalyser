@@ -1,4 +1,4 @@
-package database
+package models
 
 import (
 	"CIHunter/src/config"
@@ -31,7 +31,7 @@ func Init() {
 		panic(err)
 	}
 
-	err = DB.AutoMigrate(Repo{})
+	err = DB.AutoMigrate(Repo{}, GitHubActionMeasure{}, GitHubActionUses{})
 	if err != nil {
 		panic(err)
 	}
