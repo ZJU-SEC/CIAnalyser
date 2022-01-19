@@ -9,11 +9,11 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/gocolly/colly"
+	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 	"path/filepath"
 	"strconv"
 	"strings"
-    "gopkg.in/yaml.v3"
 )
 
 // Crawl the repositories
@@ -119,7 +119,7 @@ func crawlGitHubRepo(href string) {
 		// not found, create
 		fmt.Printf("create %s\n", href)
 
-		gh_measure, gh_uses, err := analyzeRepoByGit(href)
+		ghMeasure, ghUses, err := analyzeRepoByGit(href)
 		if err != nil {
 
 		} else {
@@ -134,18 +134,18 @@ func crawlGitHubRepo(href string) {
 				}
 
 				// create measurement
-				gh_measure.RepoID = repo.ID
-				gh_measure.Repo = repo
-				if err := tx.Create(&gh_measure).Error; err != nil {
+				ghMeasure.RepoID = repo.ID
+				ghMeasure.Repo = repo
+				if err := tx.Create(&ghMeasure).Error; err != nil {
 					return err
 				}
 
 				// create uses data
-				for i := 0; i <= len(gh_uses); i++ {
-					gh_uses[i].GitHubActionMeasureID = gh_measure.ID
-					gh_uses[i].GitHubActionMeasure = gh_measure
+				for i := 0; i <= len(ghUses); i++ {
+					ghUses[i].GitHubActionMeasureID = ghMeasure.ID
+					ghUses[i].GitHubActionMeasure = ghMeasure
 				}
-				if err := tx.Create(&gh_uses).Error; err != nil {
+				if err := tx.Create(&ghUses).Error; err != nil {
 					return err
 				}
 
@@ -164,39 +164,42 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 
 	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
 		URL: "https://github.com" + href,
-    }); err != nil { // clone error, fast return
+	}); err != nil { // clone error, fast return
 		return models.GitHubActionMeasure{}, nil, err
-    }
+	}
 
 	// declare variables
-	var gh_measure models.GitHubActionMeasure
-	var gh_uses []models.GitHubActionUses
+	var ghMeasure models.GitHubActionMeasure
+	var ghUses []models.GitHubActionUses
 
 	// analyze workflows
-    workflows, err := fs.ReadDir(".github/workflows")
-    if err != nil {
+	workflows, err := fs.ReadDir(".github/workflows")
+	if err != nil {
 		return models.GitHubActionMeasure{}, nil, err
-    }
+	}
 
 	for _, entry := range workflows {
 		// if dir / not yml / not yaml skip
-		if entry.IsDir() ||
-			filepath.Ext(entry.Name()) != "yml" ||
-			filepath.Ext(entry.Name()) != "yaml" {
+		ext := filepath.Ext(entry.Name())
+		if entry.IsDir() || (ext != ".yml" && ext != ".yaml") {
 			continue
 		}
 
-        // open yaml configuration file
-        yml, err := fs.Open(entry.Name())
+		// open yaml configuration file
+		yml, err := fs.Open(".github/workflows/" + entry.Name())
 		if err != nil {
-		    return models.GitHubActionMeasure{}, nil, err
+			return models.GitHubActionMeasure{}, nil, err
 		}
 
-        w := models.Workflow{}
-        if err := yaml.NewDecoder(yml).Decode(w); err != nil {
-		    return models.GitHubActionMeasure{}, nil, err
-        }
+		// parse workflow from yaml file
+		w := models.Workflow{}
+		if err := yaml.NewDecoder(yml).Decode(&w); err != nil {
+			return models.GitHubActionMeasure{}, nil, err
+		}
+
+		// map result from workflow to measure / uses
+
 	}
 
-	return gh_measure, gh_uses, nil
+	return ghMeasure, ghUses, nil
 }
