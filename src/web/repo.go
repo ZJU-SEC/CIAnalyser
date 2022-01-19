@@ -9,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/gocolly/colly"
+	"github.com/shomali11/parallelizer"
 	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 	"path/filepath"
@@ -18,8 +19,21 @@ import (
 
 // Crawl the repositories
 func Crawl() {
-	crawlGitstarRepo()
-	crawlGitstarUserOrg()
+	group := parallelizer.NewGroup()
+	defer group.Close()
+
+	for i := 1; i <= 50; i++ {
+		i := i
+		group.Add(func() {
+			crawlGitstarRepo(i)
+		})
+		group.Add(func() {
+			crawlGitstarUserOrg(i, true)  // crawl organizations
+			crawlGitstarUserOrg(i, false) // crawl users
+		})
+	}
+
+	group.Wait()
 }
 
 func commonCollector() *colly.Collector {
@@ -37,7 +51,7 @@ func commonCollector() *colly.Collector {
 	return c
 }
 
-func crawlGitstarRepo() {
+func crawlGitstarRepo(page int) {
 	c := commonCollector()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -47,13 +61,11 @@ func crawlGitstarRepo() {
 		}
 	})
 
-	for i := 1; i <= 50; i++ {
-		pageURL := fmt.Sprintf("https://gitstar-ranking.com/repositories?page=%d", i)
-		c.Visit(pageURL)
-	}
+	pageURL := fmt.Sprintf("https://gitstar-ranking.com/repositories?page=%d", page)
+	c.Visit(pageURL)
 }
 
-func crawlGitstarUserOrg() {
+func crawlGitstarUserOrg(page int, org bool) {
 	c := commonCollector()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -63,12 +75,13 @@ func crawlGitstarUserOrg() {
 		}
 	})
 
-	for i := 1; i <= 50; i++ {
-		userURL := fmt.Sprintf("https://gitstar-ranking.com/users?page=%d", i)
-		orgURL := fmt.Sprintf("https://gitstar-ranking.com/organizations?page=%d", i)
-		c.Visit(userURL)
-		c.Visit(orgURL)
+	var url string
+	if org {
+		url = fmt.Sprintf("https://gitstar-ranking.com/users?page=%d", page)
+	} else {
+		url = fmt.Sprintf("https://gitstar-ranking.com/organizations?page=%d", page)
 	}
+	c.Visit(url)
 }
 
 // crawl the repositories hosted on Gitstar
@@ -121,7 +134,7 @@ func crawlGitHubRepo(href string) {
 
 		ghMeasure, ghUses, err := analyzeRepoByGit(href)
 		if err != nil {
-
+			fmt.Println("[ERROR] when trying analyze", href, "by git:", err)
 		} else {
 			// no error happened when analyzing repository
 			// create this repository
@@ -141,7 +154,7 @@ func crawlGitHubRepo(href string) {
 				}
 
 				// create uses data
-				for i := 0; i <= len(ghUses); i++ {
+				for i := 0; i < len(ghUses); i++ {
 					ghUses[i].GitHubActionMeasureID = ghMeasure.ID
 					ghUses[i].GitHubActionMeasure = ghMeasure
 				}
@@ -163,7 +176,8 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 	fs := memfs.New()
 
 	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
-		URL: "https://github.com" + href,
+		URL:   "https://github.com" + href + ".git",
+		Depth: 1,
 	}); err != nil { // clone error, fast return
 		return models.GitHubActionMeasure{}, nil, err
 	}
@@ -198,7 +212,13 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 		}
 
 		// map result from workflow to measure / uses
-
+		for _, job := range w.Jobs {
+			for _, step := range job.Steps { // traverse `uses` item, if not empty, record
+				if step.Uses != "" {
+					ghUses = append(ghUses, models.GitHubActionUses{Uses: step.Uses})
+				}
+			}
+		}
 	}
 
 	return ghMeasure, ghUses, nil
