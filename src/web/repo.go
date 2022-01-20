@@ -53,25 +53,34 @@ func commonCollector() *colly.Collector {
 
 func crawlGitstarRepo(page int) {
 	c := commonCollector()
+	group := parallelizer.NewGroup()
+	defer group.Close()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_item" {
-			crawlGitHubRepo(link)
+			group.Add(func() {
+				crawlGitHubRepo(link)
+			})
 		}
 	})
 
 	pageURL := fmt.Sprintf("https://gitstar-ranking.com/repositories?page=%d", page)
 	c.Visit(pageURL)
+	group.Wait()
 }
 
 func crawlGitstarUserOrg(page int, org bool) {
 	c := commonCollector()
+	group := parallelizer.NewGroup()
+	defer group.Close()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_item" {
-			crawlGitstarUserOrgRepo(link)
+			group.Add(func() {
+				crawlGitstarUserOrgRepo(link)
+			})
 		}
 	})
 
@@ -82,18 +91,23 @@ func crawlGitstarUserOrg(page int, org bool) {
 		url = fmt.Sprintf("https://gitstar-ranking.com/organizations?page=%d", page)
 	}
 	c.Visit(url)
+	group.Wait()
 }
 
 // crawl the repositories hosted on Gitstar
 func crawlGitstarUserOrgRepo(href string) {
 	page := getPageOfUserOrg(href)
+	group := parallelizer.NewGroup()
+	defer group.Close()
 
 	c := commonCollector()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_full_item" {
-			crawlGitHubRepo(link)
+			group.Add(func() {
+				crawlGitHubRepo(link)
+			})
 		}
 	})
 
@@ -101,6 +115,7 @@ func crawlGitstarUserOrgRepo(href string) {
 		url := fmt.Sprintf("https://gitstar-ranking.com%s?page=%d", href, i)
 		c.Visit(url)
 	}
+	group.Wait()
 }
 
 // calculate the total page of user / org
@@ -130,15 +145,14 @@ func crawlGitHubRepo(href string) {
 	res := models.DB.Where("Ref = ?", href).First(&repo)
 	if res.Error == gorm.ErrRecordNotFound {
 		// not found, create
-		fmt.Printf("create %s\n", href)
 
 		ghMeasure, ghUses, err := analyzeRepoByGit(href)
 		if err != nil {
-			fmt.Println("[ERROR] when trying analyze", href, "by git:", err)
+			fmt.Println("[ERROR] when trying analyze", href, err)
 		} else {
 			// no error happened when analyzing repository
 			// create this repository
-			models.DB.Transaction(func(tx *gorm.DB) error {
+			err := models.DB.Transaction(func(tx *gorm.DB) error {
 				repo.Ref = href
 
 				// create repository data
@@ -146,24 +160,31 @@ func crawlGitHubRepo(href string) {
 					return err
 				}
 
-				// create measurement
-				ghMeasure.RepoID = repo.ID
-				ghMeasure.Repo = repo
-				if err := tx.Create(&ghMeasure).Error; err != nil {
-					return err
-				}
+				// not using GitHub Actions, skip
+				if ghMeasure != nil {
+					// create measurement
+					ghMeasure.RepoID = repo.ID
+					ghMeasure.Repo = repo
+					if err := tx.Create(ghMeasure).Error; err != nil {
+						return err
+					}
 
-				// create uses data
-				for i := 0; i < len(ghUses); i++ {
-					ghUses[i].GitHubActionMeasureID = ghMeasure.ID
-					ghUses[i].GitHubActionMeasure = ghMeasure
+					// create uses data
+					for i := 0; i < len(ghUses); i++ {
+						ghUses[i].GitHubActionMeasureID = ghMeasure.ID
+						ghUses[i].GitHubActionMeasure = *ghMeasure
+					}
+					if err := tx.Create(&ghUses).Error; err != nil {
+						return err
+					}
 				}
-				if err := tx.Create(&ghUses).Error; err != nil {
-					return err
-				}
-
 				return nil // commit the whole transaction
 			})
+			if err != nil {
+				fmt.Println("[ERROR] failed to create", href, "because:", err)
+			} else {
+				fmt.Println("[SUCCESS]", href, "created")
+			}
 		}
 	} else if config.NOW.Sub(repo.UpdatedAt) > config.UPDATE_DIFF {
 		// TODO update
@@ -171,7 +192,7 @@ func crawlGitHubRepo(href string) {
 	}
 }
 
-func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubActionUses, error) {
+func analyzeRepoByGit(href string) (*models.GitHubActionMeasure, []models.GitHubActionUses, error) {
 	// clone git repo to memory
 	fs := memfs.New()
 
@@ -179,17 +200,17 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 		URL:   "https://github.com" + href + ".git",
 		Depth: 1,
 	}); err != nil { // clone error, fast return
-		return models.GitHubActionMeasure{}, nil, err
+		return nil, nil, err
 	}
 
 	// declare variables
-	var ghMeasure models.GitHubActionMeasure
+	var ghMeasure *models.GitHubActionMeasure = nil
 	var ghUses []models.GitHubActionUses
 
 	// analyze workflows
 	workflows, err := fs.ReadDir(".github/workflows")
 	if err != nil {
-		return models.GitHubActionMeasure{}, nil, err
+		return nil, nil, err
 	}
 
 	for _, entry := range workflows {
@@ -202,13 +223,18 @@ func analyzeRepoByGit(href string) (models.GitHubActionMeasure, []models.GitHubA
 		// open yaml configuration file
 		yml, err := fs.Open(".github/workflows/" + entry.Name())
 		if err != nil {
-			return models.GitHubActionMeasure{}, nil, err
+			continue
 		}
 
 		// parse workflow from yaml file
 		w := models.Workflow{}
 		if err := yaml.NewDecoder(yml).Decode(&w); err != nil {
-			return models.GitHubActionMeasure{}, nil, err
+			continue
+		}
+
+		// create ghMeasure
+		if ghMeasure == nil {
+			ghMeasure = new(models.GitHubActionMeasure)
 		}
 
 		// map result from workflow to measure / uses
