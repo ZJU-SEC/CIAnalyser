@@ -20,7 +20,7 @@ import (
 
 // Crawl the repositories
 func Crawl() {
-	group := parallelizer.NewGroup()
+	group := parallelizer.NewGroup(parallelizer.WithPoolSize(config.THREAD_SIZE))
 	defer group.Close()
 
 	for i := 1; i <= 50; i++ {
@@ -54,7 +54,7 @@ func commonCollector() *colly.Collector {
 
 func crawlGitstarRepo(page int) {
 	c := commonCollector()
-	group := parallelizer.NewGroup()
+	group := parallelizer.NewGroup(parallelizer.WithPoolSize(config.THREAD_SIZE))
 	defer group.Close()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -73,7 +73,7 @@ func crawlGitstarRepo(page int) {
 
 func crawlGitstarUserOrg(page int, org bool) {
 	c := commonCollector()
-	group := parallelizer.NewGroup()
+	group := parallelizer.NewGroup(parallelizer.WithPoolSize(config.THREAD_SIZE))
 	defer group.Close()
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -190,7 +190,7 @@ func crawlGitHubRepo(href string) {
 		}
 	} else if config.NOW.Sub(repo.UpdatedAt) > config.UPDATE_DIFF {
 		// TODO update
-		fmt.Printf("update %s\n", href)
+		//fmt.Printf("update %s\n", href)
 	}
 }
 

@@ -12,6 +12,7 @@ var Config *ini.File
 var UPDATE_DIFF time.Duration
 var NOW = time.Now()
 var DEV_SHM string
+var THREAD_SIZE int
 
 // Web
 var GITHUB_TOKEN string
@@ -34,6 +35,7 @@ func Init() {
 	updateDays := APPSection.Key("UPDATE_DIFF").MustInt(7)
 	UPDATE_DIFF = time.Duration(24*updateDays) * time.Hour
 	DEV_SHM = APPSection.Key("DEV_SHM").String()
+	THREAD_SIZE = APPSection.Key("THREAD_SIZE").MustInt(16)
 
 	// load WEB section
 	WEBSection, err := Config.GetSection("WEB")
