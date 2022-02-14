@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"CIHunter/src/config"
+	"path"
+	"strings"
+	"time"
+)
 
 // Repo schema for repo's metadata
 type Repo struct {
@@ -8,11 +13,22 @@ type Repo struct {
 	Ref       string `gorm:"uniqueIndex"`
 	UpdatedAt time.Time
 
+	// source of the repo
+	Source []byte `gorm:"type:bytea"`
+
 	ContributorCount uint
 	CommitCount      uint
 	WatchCount       uint
 	ForkCount        uint
 	StarCount        uint
+}
+
+func (r *Repo) Name() string {
+	return strings.ReplaceAll(r.Ref[1:], "/", ":")
+}
+
+func (r *Repo) LocalPath() string {
+	return path.Join(config.DEV_SHM, r.Name())
 }
 
 // GitHubActionMeasure measurement of the GitHub Actions

@@ -5,13 +5,14 @@ import (
 	"CIHunter/src/models"
 	"CIHunter/src/utils"
 	"fmt"
-	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/gocolly/colly"
 	"github.com/shomali11/parallelizer"
 	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -146,7 +147,7 @@ func crawlGitHubRepo(href string) {
 	if res.Error == gorm.ErrRecordNotFound {
 		// not found, create
 
-		ghMeasure, ghUses, err := analyzeRepoByGit(href)
+		src, ghMeasure, ghUses, err := analyzeRepoByGit(href)
 		if err != nil {
 			fmt.Println("[ERROR] when trying analyze", href, err)
 		} else {
@@ -154,6 +155,7 @@ func crawlGitHubRepo(href string) {
 			// create this repository
 			err := models.DB.Transaction(func(tx *gorm.DB) error {
 				repo.Ref = href
+				repo.Source = src
 
 				// create repository data
 				if err := tx.Create(&repo).Error; err != nil {
@@ -192,15 +194,15 @@ func crawlGitHubRepo(href string) {
 	}
 }
 
-func analyzeRepoByGit(href string) (*models.GitHubActionMeasure, []models.GitHubActionUses, error) {
-	// clone git repo to memory
-	fs := memfs.New()
+func analyzeRepoByGit(href string) ([]byte, *models.GitHubActionMeasure, []models.GitHubActionUses, error) {
+	repoName := strings.ReplaceAll(href[1:], "/", ":")
+	repoPath := path.Join(config.DEV_SHM, repoName)
 
-	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
+	if _, err := git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:   "https://github.com" + href + ".git",
 		Depth: 1,
 	}); err != nil { // clone error, fast return
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// declare variables
@@ -208,11 +210,7 @@ func analyzeRepoByGit(href string) (*models.GitHubActionMeasure, []models.GitHub
 	var ghUses []models.GitHubActionUses
 
 	// analyze workflows
-	workflows, err := fs.ReadDir(".github/workflows")
-	if err != nil {
-		return nil, nil, err
-	}
-
+	workflows, _ := ioutil.ReadDir(path.Join(repoPath, ".github/workflows"))
 	for _, entry := range workflows {
 		// if dir / not yml / not yaml skip
 		ext := filepath.Ext(entry.Name())
@@ -221,14 +219,14 @@ func analyzeRepoByGit(href string) (*models.GitHubActionMeasure, []models.GitHub
 		}
 
 		// open yaml configuration file
-		yml, err := fs.Open(".github/workflows/" + entry.Name())
+		yml, err := os.ReadFile(path.Join(repoPath, ".github/workflows", entry.Name()))
 		if err != nil {
 			continue
 		}
 
 		// parse workflow from yaml file
 		w := models.Workflow{}
-		if err := yaml.NewDecoder(yml).Decode(&w); err != nil {
+		if err := yaml.Unmarshal(yml, &w); err != nil {
 			continue
 		}
 
@@ -247,5 +245,14 @@ func analyzeRepoByGit(href string) (*models.GitHubActionMeasure, []models.GitHub
 		}
 	}
 
-	return ghMeasure, ghUses, nil
+	var src []byte = nil
+
+	if ghMeasure != nil {
+		src, _ = utils.SerializeRepo(repoName)
+	}
+
+	// remove local repo to save storage
+	os.RemoveAll(repoPath)
+
+	return src, ghMeasure, ghUses, nil
 }
