@@ -2,25 +2,11 @@ package utils
 
 import (
 	"CIHunter/src/config"
-	"archive/tar"
-	"bufio"
-	"bytes"
-	"context"
 	"fmt"
-	"github.com/mholt/archiver/v4"
-	"io"
+	"github.com/gocolly/colly"
 	"math/rand"
-	"os"
-	"path"
-	"path/filepath"
+	"time"
 )
-
-func Init() {
-	localRepos, _ := filepath.Glob(path.Join(config.DEV_SHM, "*:*"))
-	for _, p := range localRepos {
-		os.RemoveAll(p)
-	}
-}
 
 func RandomString() string {
 	const bytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -31,96 +17,52 @@ func RandomString() string {
 	return string(b)
 }
 
-// define the archive format
-var format = archiver.CompressedArchive{
-	Compression: archiver.Gz{},
-	Archival:    archiver.Tar{},
-}
+// RandomIntArray return shuffled int array
+func RandomIntArray(min, max int) []int {
+	intArray := make([]int, max-min+1)
+	for i := range intArray {
+		intArray[i] = min + i
+	}
 
-// SerializeRepo serialize the git repository into bytea
-func SerializeRepo(repoName string) ([]byte, error) {
-	sourcePath := path.Join(config.DEV_SHM, repoName)
-
-	files, err := archiver.FilesFromDisk(nil, map[string]string{
-		sourcePath: "",
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(intArray), func(i, j int) {
+		intArray[i], intArray[j] = intArray[j], intArray[i]
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	var buf bytes.Buffer
-	out := bufio.NewWriter(&buf)
-
-	if err := format.Archive(context.Background(), out, files); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return intArray
 }
 
-// DeserializeRepo deserialize the git repositories from bytes
-func DeserializeRepo(source []byte) error {
-	input := bytes.NewReader(source)
+// CommonCollector return a base collector
+func CommonCollector() *colly.Collector {
+	c := colly.NewCollector()
 
-	handler := func(ctx context.Context, f archiver.File) error {
-		// do something with the file
-		filePath := path.Join(config.DEV_SHM, f.NameInArchive)
-		fileHeader := f.Header.(*tar.Header)
+	// set random `User-Agent`
+	c.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("User-Agent", RandomString())
+	})
 
-		switch fileHeader.Typeflag {
-		case tar.TypeDir:
-			if err := os.MkdirAll(filePath, 0755); err != nil {
-				return err
-			}
-			return nil
-		case tar.TypeReg, tar.TypeChar, tar.TypeBlock, tar.TypeFifo:
-			if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-				return err
-			}
-
-			out, err := os.Create(filePath)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			if err = out.Chmod(f.Mode()); err != nil {
-				return err
-			}
-
-			in, err := f.Open()
-
-			if _, err = io.Copy(out, in); err != nil {
-				return err
-			}
-			return nil
-		case tar.TypeSymlink:
-			if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-				return err
-			}
-
-			if err := os.Symlink(fileHeader.Linkname, filePath); err != nil {
-				return err
-			}
-			return nil
-
-		case tar.TypeLink:
-			if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-				return err
-			}
-			if err := os.Link(filepath.Join(filePath, fileHeader.Linkname), filePath); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return fmt.Errorf("%s: unknown type flag: %c", fileHeader.Name, fileHeader.Typeflag)
+	c.OnError(func(r *colly.Response, err error) {
+		if r.StatusCode == 404 {
+			return
 		}
-	}
+		fmt.Println("[debug]", r.StatusCode, r.Request.URL)
+		retryRequest(r.Request, config.TRYOUT)
+	})
 
-	err := format.Extract(context.Background(), input, nil, handler)
-	if err != nil {
-		return err
-	}
+	return c
+}
 
-	return nil
+func retryRequest(r *colly.Request, maxRetries int) int {
+	retriesLeft := maxRetries
+	if x, ok := r.Ctx.GetAny("retriesLeft").(int); ok {
+		retriesLeft = x
+	}
+	if retriesLeft > 0 {
+		r.Ctx.Put("retriesLeft", retriesLeft-1)
+		time.Sleep(time.Duration(50) * time.Millisecond)
+		r.Retry()
+	} else {
+		fmt.Println("❗️ cannot fetch", r.URL)
+	}
+	return retriesLeft
 }

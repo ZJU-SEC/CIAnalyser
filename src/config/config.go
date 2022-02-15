@@ -2,17 +2,16 @@ package config
 
 import (
 	"gopkg.in/ini.v1"
-	"time"
 )
 
 // Config ini file of the whole application
 var Config *ini.File
 
 // APP
-var UPDATE_DIFF time.Duration
-var NOW = time.Now()
-var DEV_SHM string
-var THREAD_SIZE int
+var WORKER int
+var QUEUE_SIZE int
+var TRYOUT int
+var DEBUG bool
 
 // Web
 var GITHUB_TOKEN string
@@ -32,10 +31,10 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
-	updateDays := APPSection.Key("UPDATE_DIFF").MustInt(7)
-	UPDATE_DIFF = time.Duration(24*updateDays) * time.Hour
-	DEV_SHM = APPSection.Key("DEV_SHM").String()
-	THREAD_SIZE = APPSection.Key("THREAD_SIZE").MustInt(16)
+	WORKER = APPSection.Key("WORKER").MustInt(16)
+	QUEUE_SIZE = APPSection.Key("QUEUE_SIZE").MustInt(128)
+	TRYOUT = APPSection.Key("TRYOUT").MustInt(5)
+	DEBUG = APPSection.Key("DEBUG").MustBool(false)
 
 	// load WEB section
 	WEBSection, err := Config.GetSection("WEB")
