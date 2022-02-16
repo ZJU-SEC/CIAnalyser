@@ -10,6 +10,7 @@ import (
 	"github.com/shomali11/parallelizer"
 	"gopkg.in/yaml.v3"
 	"path/filepath"
+	"runtime"
 )
 
 func CrawlActions() {
@@ -32,6 +33,7 @@ func CrawlActions() {
 		if !repo.Checked {
 			group.Add(func() {
 				analyzeRepo(&repo)
+				runtime.GC()
 			})
 		}
 	}
