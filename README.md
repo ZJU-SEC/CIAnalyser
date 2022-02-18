@@ -16,6 +16,7 @@ Start a postgres container:
 ```bash
 $ docker run \
   --name postgres -d \
+  --restart unless-stopped \
   -e POSTGRES_USER=ZJU-SEC \
   -e POSTGRES_PASSWORD=<YOUR DB PASSWORD> \
   -e POSTGRES_DB=CIHunter \
