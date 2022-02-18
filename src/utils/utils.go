@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"github.com/gocolly/colly"
 	"math/rand"
+	"os"
 	"time"
 )
+
+func Init() {
+	os.RemoveAll(config.REPOS_PATH)
+}
 
 func RandomString() string {
 	const bytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -65,4 +70,13 @@ func retryRequest(r *colly.Request, maxRetries int) int {
 		fmt.Println("❗️ cannot fetch", r.URL)
 	}
 	return retriesLeft
+}
+
+func DirExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
 }

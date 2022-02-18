@@ -12,6 +12,11 @@ var WORKER int
 var QUEUE_SIZE int
 var TRYOUT int
 var DEBUG bool
+var BATCH_SIZE int
+
+// STORAGE
+var REPOS_PATH string
+var WORKFLOWS_PATH string
 
 // Web
 var GITHUB_TOKEN string
@@ -35,6 +40,14 @@ func Init() {
 	QUEUE_SIZE = APPSection.Key("QUEUE_SIZE").MustInt(128)
 	TRYOUT = APPSection.Key("TRYOUT").MustInt(5)
 	DEBUG = APPSection.Key("DEBUG").MustBool(false)
+	BATCH_SIZE = APPSection.Key("BATCH_SIZE").MustInt(1024)
+
+	STORAGESection, err := Config.GetSection("STORAGE")
+	if err != nil {
+		panic(err)
+	}
+	REPOS_PATH = STORAGESection.Key("REPOS_PATH").String()
+	WORKFLOWS_PATH = STORAGESection.Key("WORKFLOWS_PATH").String()
 
 	// load WEB section
 	WEBSection, err := Config.GetSection("WEB")

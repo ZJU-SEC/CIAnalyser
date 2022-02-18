@@ -3,17 +3,17 @@ package web
 import (
 	"CIHunter/src/config"
 	"CIHunter/src/models"
+	"CIHunter/src/utils"
 	"fmt"
-	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/otiai10/copy"
 	"github.com/shomali11/parallelizer"
-	"gopkg.in/yaml.v3"
-	"path/filepath"
-	"runtime"
+	"os"
+	"path"
 )
 
-func CrawlActions() {
+func CrawlActions() int {
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
 		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),
@@ -26,75 +26,46 @@ func CrawlActions() {
 	}
 	defer rows.Close()
 
-	for rows.Next() {
+	var count = 0
+	for rows.Next() && count < config.BATCH_SIZE {
 		var repo models.Repo
 		models.DB.ScanRows(rows, &repo)
 
 		if !repo.Checked {
 			group.Add(func() {
-				analyzeRepo(&repo)
-				runtime.GC()
+				downloadRepo(&repo)
 			})
+			count++
 		}
 	}
 
 	group.Wait()
+
+	if count == 0 {
+		return 0
+	} else {
+		return 1
+	}
 }
 
 // analyze the repository
-func analyzeRepo(repo *models.Repo) {
-	fs := memfs.New()
-	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
-		URL:   "https://github.com" + repo.Ref + ".git",
+func downloadRepo(repo *models.Repo) {
+	if _, err := git.PlainClone(repo.LocalPath(), false, &git.CloneOptions{
+		URL:   repo.GitURL(),
 		Depth: 1,
 	}); err != nil {
-		fmt.Println("[ERR] cannot clone", repo.Ref, err)
+		switch err {
+		case transport.ErrEmptyRemoteRepository, transport.ErrAuthenticationRequired:
+			repo.Delete()
+		default:
+			fmt.Println("[ERR] cannot clone", repo.Ref, err)
+		}
 		return
 	}
 
-	// declare variables
-	var ghMeasure *models.GitHubActionMeasure = nil
-	var ghUses []models.GitHubActionUses
-
-	// analyze workflows
-	workflows, _ := fs.ReadDir(".github/workflows")
-	for _, entry := range workflows {
-		// if dir / not yml / not yaml skip
-		ext := filepath.Ext(entry.Name())
-		if entry.IsDir() || (ext != ".yml" && ext != ".yaml") {
-			continue
-		}
-
-		// open yaml configuration file
-		yml, err := fs.Open(".github/workflows/" + entry.Name())
-		if err != nil {
-			continue
-		}
-
-		// parse workflow from yaml file
-		w := models.Workflow{}
-		if err := yaml.NewDecoder(yml).Decode(&w); err != nil {
-			continue
-		}
-
-		// create ghMeasure
-		if ghMeasure == nil {
-			ghMeasure = new(models.GitHubActionMeasure)
-		}
-
-		// map result from workflow to measure / uses
-		for _, job := range w.Jobs {
-			for _, step := range job.Steps { // traverse `uses` item, if not empty, record
-				if step.Uses != "" {
-					ghUses = append(ghUses, models.GitHubActionUses{Uses: step.Uses})
-				}
-			}
-		}
+	if utils.DirExists(repo.WorkflowsPath()) {
+		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
 	}
-
-	// create measure if using github actions
-	if ghMeasure != nil {
-		ghMeasure.Create(repo, ghUses)
-	}
+	os.RemoveAll(repo.LocalPath())
 	repo.Check()
 }
