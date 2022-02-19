@@ -9,8 +9,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/otiai10/copy"
 	"github.com/shomali11/parallelizer"
+	"math/rand"
 	"os"
 	"path"
+	"sync"
+	"time"
 )
 
 func CrawlActions() int {
@@ -20,13 +23,20 @@ func CrawlActions() int {
 	)
 	defer group.Close()
 
-	rows, err := models.DB.Model(&models.Repo{}).Rows()
+	rows, err := models.DB.Model(&models.Repo{}).Where("checked = ?", false).Rows()
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 
-	var count = 0
+	rand.Seed(time.Now().UnixNano())
+	randomSkip := rand.Intn(config.BATCH_SIZE)
+	count := 0
+	for rows.Next() && count < randomSkip {
+		count++
+	}
+
+	count = 0
 	for rows.Next() && count < config.BATCH_SIZE {
 		var repo models.Repo
 		models.DB.ScanRows(rows, &repo)
@@ -50,6 +60,34 @@ func CrawlActions() int {
 
 // analyze the repository
 func downloadRepo(repo *models.Repo) {
+	c := make(chan error, 1)
+
+	// clone worker
+	go func() {
+		err := clone(repo)
+		c <- err
+	}()
+
+	select {
+	case res := <-c:
+		if res != nil {
+			os.RemoveAll(repo.LocalPath())
+			return
+		}
+	case <-time.After(time.Duration(config.TIMEOUT) * time.Second):
+		fmt.Println("- skipped", repo.Ref)
+		adjustTimeout()
+		return
+	}
+
+	if utils.DirExists(repo.WorkflowsPath()) {
+		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
+	}
+	os.RemoveAll(repo.LocalPath())
+	repo.Check()
+}
+
+func clone(repo *models.Repo) error {
 	if _, err := git.PlainClone(repo.LocalPath(), false, &git.CloneOptions{
 		URL:   repo.GitURL(),
 		Depth: 1,
@@ -60,12 +98,24 @@ func downloadRepo(repo *models.Repo) {
 		default:
 			fmt.Println("[ERR] cannot clone", repo.Ref, err)
 		}
-		return
+		return err
 	}
 
-	if utils.DirExists(repo.WorkflowsPath()) {
-		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
+	return nil
+}
+
+var timeoutCount = 0
+
+func adjustTimeout() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	if timeoutCount > 50 {
+		config.TIMEOUT++
+		timeoutCount = 0
+	} else {
+		timeoutCount++
 	}
-	os.RemoveAll(repo.LocalPath())
-	repo.Check()
+
+	mutex.Unlock()
 }
