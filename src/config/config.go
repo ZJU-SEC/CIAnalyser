@@ -12,6 +12,7 @@ var WORKER int
 var QUEUE_SIZE int
 var TRYOUT int
 var TIMEOUT int
+var TIMEOUT_THRESHOLD int
 var DEBUG bool
 var BATCH_SIZE int
 
@@ -41,6 +42,7 @@ func Init() {
 	QUEUE_SIZE = APPSection.Key("QUEUE_SIZE").MustInt(128)
 	TRYOUT = APPSection.Key("TRYOUT").MustInt(5)
 	TIMEOUT = APPSection.Key("TIMEOUT").MustInt(3)
+	TIMEOUT_THRESHOLD = APPSection.Key("TIMEOUT_THRESHOLD").MustInt(10)
 	DEBUG = APPSection.Key("DEBUG").MustBool(false)
 	BATCH_SIZE = APPSection.Key("BATCH_SIZE").MustInt(1024)
 

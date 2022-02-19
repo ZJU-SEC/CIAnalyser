@@ -110,8 +110,8 @@ func adjustTimeout() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	if timeoutCount > 50 {
-		config.TIMEOUT++
+	if timeoutCount > config.TIMEOUT_THRESHOLD {
+		config.TIMEOUT *= 2
 		timeoutCount = 0
 	} else {
 		timeoutCount++
