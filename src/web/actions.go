@@ -23,19 +23,26 @@ func CrawlActions() int {
 	)
 	defer group.Close()
 
+	// get database iterator
 	rows, err := models.DB.Model(&models.Repo{}).Where("checked = ?", false).Rows()
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 
+	var notCheckedCount int64
+	models.DB.Model(&models.Repo{}).Where("checked = ?", false).Count(&notCheckedCount)
 	rand.Seed(time.Now().UnixNano())
-	randomSkip := rand.Intn(config.BATCH_SIZE)
+	randomSkip := rand.Intn(int(notCheckedCount))
+	fmt.Println("randomly skip", randomSkip, "rows")
+
 	count := 0
 	for rows.Next() && count < randomSkip {
 		count++
 	}
 
+	fmt.Println("start processing ...")
+	time.Sleep(1 * time.Second)
 	count = 0
 	for rows.Next() && count < config.BATCH_SIZE {
 		var repo models.Repo
