@@ -10,18 +10,18 @@ import (
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID      uint   `gorm:"primaryKey"`
-	Ref     string `gorm:"uniqueIndex"`
+	ID      uint   `gorm:"primaryKey;autoIncrement;"`
+	Ref     string `gorm:"unique"`
 	Checked bool   `gorm:"default:false"`
 }
 
-// Create a repo
-func Create(href string) {
+// CreateRepo a repo
+func CreateRepo(href string) {
 	var mutex sync.Mutex
 	mutex.Lock()
 
 	repo := Repo{}
-	res := DB.Where("ref = ?", href)
+	res := DB.Where("ref = ?", href).First(&repo)
 
 	if res.Error == gorm.ErrRecordNotFound {
 		repo.Ref = href

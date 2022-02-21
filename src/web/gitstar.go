@@ -46,7 +46,7 @@ func crawlGitstarRepo(page int) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_item" {
 			group.Add(func() {
-				models.Create(link)
+				models.CreateRepo(link)
 			})
 		}
 	})
@@ -95,7 +95,7 @@ func crawlGitstarUserOrgRepo(href string) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_full_item" {
 			group.Add(func() {
-				models.Create(link)
+				models.CreateRepo(link)
 			})
 		}
 	})

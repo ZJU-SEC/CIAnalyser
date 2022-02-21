@@ -22,6 +22,8 @@ var WORKFLOWS_PATH string
 
 // Web
 var GITHUB_TOKEN string
+var SINCE_INTERVAL int
+var MAX_SINCE int
 
 // Init configurations
 func Init() {
@@ -59,6 +61,8 @@ func Init() {
 		panic(err)
 	}
 	GITHUB_TOKEN = ParseKey(WEBSection, "GITHUB_TOKEN")
+	SINCE_INTERVAL = WEBSection.Key("SINCE_INTERVAL").MustInt(5000)
+	MAX_SINCE = WEBSection.Key("MAX_SINCE").MustInt(450000000)
 }
 
 func ParseKey(section *ini.Section, key string) string {
