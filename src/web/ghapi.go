@@ -20,7 +20,7 @@ func CrawlGHAPI() {
 	defer group.Close()
 
 	rand.Seed(time.Now().UnixNano())
-	since := rand.Intn(config.SINCE_INTERVAL/100) * 100
+	since := rand.Intn(config.SINCE_INTERVAL/100)*100 + 250000000
 	for since <= config.MAX_SINCE {
 		group.Add(func() {
 			parseAPI(since)
@@ -37,7 +37,7 @@ func parseAPI(since int) {
 	c := utils.CommonCollector()
 
 	c.OnRequest(func(r *colly.Request) {
-		r.Headers.Add("Authorization", "token "+config.GITHUB_TOKEN)
+		r.Headers.Add("Authorization", "token "+utils.RequestGitHubToken())
 	})
 
 	c.OnResponse(func(r *colly.Response) {

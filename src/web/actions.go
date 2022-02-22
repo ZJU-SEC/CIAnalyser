@@ -83,6 +83,7 @@ func downloadRepo(repo *models.Repo) {
 		}
 	case <-time.After(time.Duration(config.TIMEOUT) * time.Second):
 		fmt.Println("- skipped", repo.Ref)
+		os.RemoveAll(repo.LocalPath())
 		adjustTimeout()
 		return
 	}

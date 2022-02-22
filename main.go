@@ -5,6 +5,7 @@ import (
 	"CIHunter/src/models"
 	"CIHunter/src/utils"
 	"CIHunter/src/web"
+	//"os"
 )
 
 func main() {
@@ -19,6 +20,5 @@ func main() {
 	// crawl gitstar-ranking.com
 	//res := web.CrawlActions()
 	//os.Exit(res)
-
 	web.CrawlGHAPI()
 }

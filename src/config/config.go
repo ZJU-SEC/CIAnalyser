@@ -21,7 +21,7 @@ var REPOS_PATH string
 var WORKFLOWS_PATH string
 
 // Web
-var GITHUB_TOKEN string
+var GITHUB_TOKEN []string
 var SINCE_INTERVAL int
 var MAX_SINCE int
 
@@ -30,7 +30,7 @@ func Init() {
 	var err error
 
 	// load config.ini file
-	Config, err = ini.Load("config.ini")
+	Config, err = ini.ShadowLoad("config.ini")
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +60,7 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
-	GITHUB_TOKEN = ParseKey(WEBSection, "GITHUB_TOKEN")
+	GITHUB_TOKEN = WEBSection.Key("GITHUB_TOKEN").ValueWithShadows()
 	SINCE_INTERVAL = WEBSection.Key("SINCE_INTERVAL").MustInt(5000)
 	MAX_SINCE = WEBSection.Key("MAX_SINCE").MustInt(450000000)
 }
