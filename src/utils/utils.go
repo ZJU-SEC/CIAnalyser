@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-func Init() {
-	os.RemoveAll(config.REPOS_PATH)
-}
-
 func RandomString() string {
 	const bytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, rand.Intn(10)+10)

@@ -3,7 +3,6 @@ package main
 import (
 	"CIHunter/src/config"
 	"CIHunter/src/models"
-	"CIHunter/src/utils"
 	"CIHunter/src/web"
 	//"os"
 )
@@ -15,10 +14,11 @@ func main() {
 	// initialize models
 	models.Init()
 
-	utils.Init()
-
 	// crawl gitstar-ranking.com
-	//res := web.CrawlActions()
-	//os.Exit(res)
-	web.CrawlGHAPI()
+	switch config.STAGE {
+	case 1:
+		web.CrawlGHAPI()
+	case 2:
+		web.CrawlActions()
+	}
 }

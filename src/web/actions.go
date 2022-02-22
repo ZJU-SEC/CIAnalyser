@@ -16,7 +16,14 @@ import (
 	"time"
 )
 
-func CrawlActions() int {
+func CrawlActions() {
+	for {
+		os.RemoveAll(config.REPOS_PATH)
+		crawlActions()
+	}
+}
+
+func crawlActions() {
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
 		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),
@@ -57,12 +64,6 @@ func CrawlActions() int {
 	}
 
 	group.Wait()
-
-	if count == 0 {
-		return 0
-	} else {
-		return 1
-	}
 }
 
 // analyze the repository
