@@ -1,10 +1,10 @@
 package main
 
 import (
+	"CIHunter/src/analyzer"
 	"CIHunter/src/config"
 	"CIHunter/src/models"
 	"CIHunter/src/web"
-	//"os"
 )
 
 func main() {
@@ -20,5 +20,7 @@ func main() {
 		web.CrawlGHAPI()
 	case 2:
 		web.CrawlActions()
+	case 3:
+		analyzer.Analyze()
 	}
 }

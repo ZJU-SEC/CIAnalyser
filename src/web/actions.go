@@ -17,13 +17,8 @@ import (
 )
 
 func CrawlActions() {
-	for {
-		os.RemoveAll(config.REPOS_PATH)
-		crawlActions()
-	}
-}
+	os.RemoveAll(config.REPOS_PATH)
 
-func crawlActions() {
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
 		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),
