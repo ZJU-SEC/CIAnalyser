@@ -5,6 +5,7 @@ import (
 	"CIHunter/src/models"
 	"fmt"
 	"io/ioutil"
+	"path"
 )
 
 // Analyze the collected data
@@ -51,7 +52,7 @@ func traverse() {
 	for _, authorDir := range authorDirList {
 		if authorDir.IsDir() {
 			r.TotalAuthor++
-			repoDirList, _ := ioutil.ReadDir(authorDir.Name())
+			repoDirList, _ := ioutil.ReadDir(path.Join(config.WORKFLOWS_PATH, authorDir.Name()))
 			for _, repoDir := range repoDirList {
 				if repoDir.IsDir() {
 					r.TotalReposWithGHAction++
@@ -64,7 +65,7 @@ func traverse() {
 func (r *Result) print() {
 	fmt.Println("[Global]")
 	fmt.Printf("Total repos in the central index: %d\n", r.TotalReposInCentralIndex)
-	fmt.Printf("Total repos processed: %d\n", r.TotalReposProcessed)
+	fmt.Printf("Total repos processed: %d\n\n", r.TotalReposProcessed)
 
 	fmt.Println("[How CI/CD are configured]")
 	fmt.Printf("Total number of the authors: %d\n", r.TotalAuthor)
