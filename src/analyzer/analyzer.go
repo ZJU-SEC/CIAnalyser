@@ -5,6 +5,7 @@ import (
 	"CIHunter/src/models"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 )
 
@@ -35,6 +36,15 @@ var r = Result{
 	TotalReposWithGHAction:   0,
 }
 
+func (r *Result) print() {
+	fmt.Println("[Global]")
+	fmt.Printf("Total repos in the central index: %d\n", r.TotalReposInCentralIndex)
+	fmt.Printf("Total repos processed: %d\n\n", r.TotalReposProcessed)
+
+	fmt.Println("[How CI/CD are configured]")
+	fmt.Printf("Total number of the authors: %d\n", r.TotalAuthor)
+}
+
 func analyzeGlobal() {
 	var c int64
 
@@ -51,22 +61,31 @@ func traverse() {
 	authorDirList, _ := ioutil.ReadDir(config.WORKFLOWS_PATH)
 	for _, authorDir := range authorDirList {
 		if authorDir.IsDir() {
-			r.TotalAuthor++
+			r.TotalAuthor++ // count this author
+
 			repoDirList, _ := ioutil.ReadDir(path.Join(config.WORKFLOWS_PATH, authorDir.Name()))
 			for _, repoDir := range repoDirList {
 				if repoDir.IsDir() {
 					r.TotalReposWithGHAction++
+					repoPath := path.Join(config.WORKFLOWS_PATH, authorDir.Name(), repoDir.Name())
+
+					// analyze this repository specifically
+					analyzeRepo(repoPath)
 				}
 			}
 		}
 	}
 }
 
-func (r *Result) print() {
-	fmt.Println("[Global]")
-	fmt.Printf("Total repos in the central index: %d\n", r.TotalReposInCentralIndex)
-	fmt.Printf("Total repos processed: %d\n\n", r.TotalReposProcessed)
+func analyzeRepo(p string) {
+	f, err := os.Open(p)
+	if err != nil {
+		return
+	}
 
-	fmt.Println("[How CI/CD are configured]")
-	fmt.Printf("Total number of the authors: %d\n", r.TotalAuthor)
+	analyzeRunners()
+}
+
+func analyzeRunners() {
+
 }
