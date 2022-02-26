@@ -1,4 +1,4 @@
-package models
+package analyzer
 
 import "gopkg.in/yaml.v3"
 

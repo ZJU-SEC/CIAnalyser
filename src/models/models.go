@@ -31,7 +31,7 @@ func Init() {
 		panic(err)
 	}
 
-	err = DB.AutoMigrate(Repo{}, GitHubActionMeasure{}, GitHubActionUses{})
+	err = DB.AutoMigrate(Repo{})
 	if err != nil {
 		panic(err)
 	}
