@@ -1,6 +1,10 @@
 package analyzer
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"log"
+)
 
 // Workflow is the structure of the files in .github/workflows
 type Workflow struct {
@@ -83,4 +87,47 @@ type Step struct {
 	With map[string]string `yaml:"with"`
 	//ContinueOnError  bool              `yaml:"continue-on-error"`
 	//TimeoutMinutes   int64             `yaml:"timeout-minutes"`
+}
+
+// RunsOn list for Job. Note that RunsOn will interpolate matrix automatically
+func (j *Job) RunsOn() []string {
+	switch j.RawRunsOn.Kind {
+	case yaml.ScalarNode:
+		var val string
+		err := j.RawRunsOn.Decode(&val)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return []string{val}
+
+		//if !strings.Contains(val, "${{") || !strings.Contains(val, "}}") {
+		//} else {
+		//	// TODO interpolate matrix
+		//}
+	case yaml.SequenceNode:
+		var val []string
+		err := j.RawRunsOn.Decode(&val)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return val
+	}
+	return nil
+}
+
+// Matrix decodes RawMatrix YAML node
+func (j *Job) Matrix() map[string][]interface{} {
+	if j.Strategy == nil {
+		return nil
+	}
+
+	if j.Strategy.RawMatrix.Kind == yaml.MappingNode {
+		var val map[string][]interface{}
+		if err := j.Strategy.RawMatrix.Decode(&val); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(val)
+		return val
+	}
+	return nil
 }
