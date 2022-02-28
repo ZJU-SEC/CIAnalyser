@@ -1,9 +1,11 @@
 package analyzer
 
 import (
+	"CIHunter/src/utils"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
+	"syscall"
 )
 
 type GHRunner struct {
@@ -22,10 +24,15 @@ func analyzeRunners(f *os.File, measure *GHMeasure) {
 
 	// map result from workflow to measure / uses
 	for _, job := range w.Jobs {
-		//if job.Matrix() != nil {
-		//	fmt.Println(job.Matrix())
-		//}
-		fmt.Println(job.RunsOn())
+		runners := utils.TrimRunner(job.RunsOn())
+
+		// FIXME
+		if len(runners) == 0 {
+			syscall.Pause()
+			fmt.Println(job.RunsOn())
+		}
+		fmt.Println(runners)
+
 		//for _, step := range job.Steps { // traverse `uses` item, if not empty, record
 		//	if step.Uses != "" {
 		//		ghRunners = append(ghRunners, GHRunner{

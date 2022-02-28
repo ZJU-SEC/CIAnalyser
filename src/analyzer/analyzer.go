@@ -119,7 +119,7 @@ func analyzeRepo(repoPath string) {
 		}
 
 		analyzeRunners(f, &measure)
-		analyzeUses(f)
+		analyzeUses(f, &measure)
 
 		return nil
 	})
