@@ -50,6 +50,7 @@ var Count = GlobalCount{
 // prepare tables
 func prepare() {
 	models.DB.Migrator().CreateTable(&GHMeasure{})
+	models.DB.Migrator().CreateTable(&GHJob{})
 	models.DB.Migrator().CreateTable(&GHRunner{})
 	models.DB.Migrator().CreateTable(&GHUse{})
 }
@@ -123,8 +124,7 @@ func analyzeRepo(repoPath string) {
 			return err
 		}
 
-		analyzeRunners(f, &measure)
-		analyzeUses(f, &measure)
+		analyzeJobs(f, &measure)
 
 		return nil
 	})
