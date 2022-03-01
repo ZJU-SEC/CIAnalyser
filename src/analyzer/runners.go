@@ -9,10 +9,11 @@ import (
 )
 
 type GHRunner struct {
-	ID          uint `gorm:"primaryKey;autoIncrement"`
-	GHMeasureID uint
-	GHMeasure   GHMeasure `gorm:"foreignKey:GHMeasureID"`
-	Runner      string
+	ID         uint `gorm:"primaryKey;autoIncrement"`
+	GHJobID    uint
+	Job        GHJob `gorm:"foreignKey:GHJobID"`
+	Runner     string
+	SelfHosted bool
 }
 
 func analyzeRunners(f *os.File, measure *GHMeasure) {

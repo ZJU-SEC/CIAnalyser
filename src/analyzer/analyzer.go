@@ -22,10 +22,15 @@ func Analyze() {
 }
 
 type GHMeasure struct {
-	ID uint `gorm:"primaryKey;autoIncrement"`
-
+	ID                 uint `gorm:"primaryKey;autoIncrement"`
 	RepoRef            string
 	ConfigurationCount int `gorm:"default:0"`
+}
+
+type GHJob struct {
+	ID          uint `gorm:"primaryKey;autoIncrement"`
+	GHMeasureID uint
+	GHMeasure   GHMeasure `gorm:"foreignKey:GHMeasureID"`
 }
 
 type GlobalCount struct {
