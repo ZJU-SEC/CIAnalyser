@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// analyzeJobs analyze jobs and their underlying attributes, runners, uses, ...
 func analyzeJobs(f *os.File, measure *GHMeasure) {
 	dec := yaml.NewDecoder(f)
 	w := Workflow{}
@@ -22,7 +23,7 @@ func analyzeJobs(f *os.File, measure *GHMeasure) {
 		}
 		models.DB.Create(&ghJob)
 
-		analyzeRunners(job, &ghJob)
 		analyzeUses(job, &ghJob)
+		//analyzeRunners(job, &ghJob)
 	}
 }

@@ -33,9 +33,15 @@ func CrawlActions() {
 	defer rows.Close()
 
 	var notCheckedCount int64
+	var randomSkip int
+
 	models.DB.Model(&models.Repo{}).Where("checked = ?", false).Count(&notCheckedCount)
 	rand.Seed(time.Now().UnixNano())
-	randomSkip := rand.Intn(int(notCheckedCount))
+	if notCheckedCount == 0 {
+		randomSkip = 0
+	} else {
+		randomSkip = rand.Intn(int(notCheckedCount))
+	}
 	fmt.Println("randomly skip", randomSkip, "rows")
 
 	count := 0

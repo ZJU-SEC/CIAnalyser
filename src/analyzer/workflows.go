@@ -118,7 +118,7 @@ func (j *Job) RunsOn() []string {
 			var osList []string
 			for _, ele := range matrixes {
 				for k, v := range ele {
-					if fmt.Sprint(k) == "os" {
+					if fmt.Sprint(k) == "os" || fmt.Sprint(k) == "platform" {
 						osList = append(osList, fmt.Sprint(v))
 					}
 				}

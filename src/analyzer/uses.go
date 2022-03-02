@@ -1,5 +1,7 @@
 package analyzer
 
+import "CIHunter/src/models"
+
 type GHUse struct {
 	ID      uint `gorm:"primaryKey;autoIncrement"`
 	GHJobID uint
@@ -7,6 +9,7 @@ type GHUse struct {
 	Use     string
 }
 
+// analyzeUses analyzes how 3ed-party scripts are imported
 func analyzeUses(job *Job, ghJob *GHJob) {
 	var ghUses []GHUse
 
@@ -21,5 +24,6 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 		}
 	}
 
-	// TODO create ghUses
+	// create ghUses
+	models.DB.Create(&ghUses)
 }

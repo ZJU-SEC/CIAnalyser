@@ -51,7 +51,7 @@ var Count = GlobalCount{
 func prepare() {
 	models.DB.Migrator().CreateTable(&GHMeasure{})
 	models.DB.Migrator().CreateTable(&GHJob{})
-	models.DB.Migrator().CreateTable(&GHRunner{})
+	//models.DB.Migrator().CreateTable(&GHRunner{})
 	models.DB.Migrator().CreateTable(&GHUse{})
 }
 
@@ -73,9 +73,11 @@ func output() {
 	models.DB.Model(&GHMeasure{}).Count(&c)
 	fmt.Printf("Total repos using GitHub Actions: %d\n", c)
 
-	models.DB.Migrator().DropTable(&GHRunner{})
-	models.DB.Migrator().DropTable(&GHUse{})
-	models.DB.Migrator().DropTable(&GHMeasure{})
+	// TODO drop all tables when pipeline is done
+	//models.DB.Migrator().DropTable(&GHRunner{})
+	//models.DB.Migrator().DropTable(&GHUse{})
+	//models.DB.Migrator().DropTable(&GHJob{})
+	//models.DB.Migrator().DropTable(&GHMeasure{})
 }
 
 func traverse() {
