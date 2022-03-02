@@ -1,6 +1,11 @@
 package analyzer
 
-import "CIHunter/src/models"
+import (
+	"CIHunter/src/models"
+	"fmt"
+	"sort"
+	"strings"
+)
 
 type GHUse struct {
 	ID      uint `gorm:"primaryKey;autoIncrement"`
@@ -26,4 +31,52 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 
 	// create ghUses
 	models.DB.Create(&ghUses)
+}
+
+// analyzePopularUses
+func analyzePopularNUses(n int) {
+	m := make(map[string]int)
+
+	rows, _ := models.DB.Model(&GHUse{}).Rows()
+
+	for rows.Next() {
+		var use GHUse
+		models.DB.ScanRows(rows, &use)
+
+		var body string
+		if strings.Contains(use.Use, "docker://") { // using docker directly
+			// parse the body of image
+			body = strings.Split(use.Use, ":")[1][2:]
+		} else if strings.Contains(use.Use, "@") { // common gh actions
+			body = strings.Split(use.Use, "@")[0]
+		} else {
+			continue // fast return
+		}
+
+		// calculate the use frequency
+		if val, ok := m[body]; ok {
+			m[body] = val + 1
+		} else {
+			m[body] = 1
+		}
+	}
+
+	type kv struct {
+		Key   string
+		Value int
+	}
+
+	var ss []kv
+	for k, v := range m {
+		ss = append(ss, kv{k, v})
+	}
+
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+
+	fmt.Println("Script\t\t\t\tOccurrences")
+	for i := 0; i < n; i++ {
+		fmt.Printf("%s\t\t%d\n", ss[i].Key, ss[i].Value)
+	}
 }

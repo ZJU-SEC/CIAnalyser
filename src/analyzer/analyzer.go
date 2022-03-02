@@ -13,12 +13,11 @@ import (
 
 // Analyze the collected data
 func Analyze() {
-	prepare()
-
-	// traverse the workflows
-	traverse()
+	//prepare()
 
 	output()
+
+	// finish
 }
 
 type GHMeasure struct {
@@ -53,6 +52,17 @@ func prepare() {
 	models.DB.Migrator().CreateTable(&GHJob{})
 	//models.DB.Migrator().CreateTable(&GHRunner{})
 	models.DB.Migrator().CreateTable(&GHUse{})
+
+	// traverse the workflows
+	traverse()
+}
+
+// TODO drop all tables when pipeline is done
+func finish() {
+	//models.DB.Migrator().DropTable(&GHRunner{})
+	//models.DB.Migrator().DropTable(&GHUse{})
+	//models.DB.Migrator().DropTable(&GHJob{})
+	//models.DB.Migrator().DropTable(&GHMeasure{})
 }
 
 func output() {
@@ -65,19 +75,30 @@ func output() {
 
 	// count all repos that is checked
 	models.DB.Model(&models.Repo{}).Where("checked = ?", true).Count(&c)
-	fmt.Printf("Total repos processed: %d\n\n", c)
+	fmt.Printf("Total repos processed: %d\n", c)
 
-	fmt.Println("[How CI/CD are configured]")
+	fmt.Println("\n[How CI/CD are configured]")
 	fmt.Printf("Total number of the authors: %d\n", Count.TotalAuthors)
 
 	models.DB.Model(&GHMeasure{}).Count(&c)
 	fmt.Printf("Total repos using GitHub Actions: %d\n", c)
+	models.DB.Model(&GHJob{}).Count(&c)
+	fmt.Printf("Total jobs: %d\n", c)
 
-	// TODO drop all tables when pipeline is done
-	//models.DB.Migrator().DropTable(&GHRunner{})
-	//models.DB.Migrator().DropTable(&GHUse{})
-	//models.DB.Migrator().DropTable(&GHJob{})
-	//models.DB.Migrator().DropTable(&GHMeasure{})
+	//------//
+	// uses //
+	//------//
+	fmt.Println("\n[How scripts are imported]")
+	models.DB.Model(&GHUse{}).Count(&c)
+	fmt.Printf("Total occurances of `uses` field: %d\n", c)
+	models.DB.Model(&GHUse{}).Where("use LIKE ?", "docker://%").Count(&c)
+	fmt.Printf("Total occurances of docker images: %d\n", c)
+	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
+	fmt.Printf("Total occurances of self-written scripts: %d\n", c)
+
+	n := 30
+	fmt.Println("\n[Popular", n, "scripts]")
+	analyzePopularNUses(n)
 }
 
 func traverse() {
