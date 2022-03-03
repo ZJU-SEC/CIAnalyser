@@ -98,7 +98,7 @@ func output() {
 
 	n := 30
 	fmt.Println("\n[Popular", n, "scripts]")
-	analyzePopularNUses(n)
+	analyzePopularNthUses(n)
 }
 
 func traverse() {

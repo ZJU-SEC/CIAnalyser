@@ -3,6 +3,8 @@ package analyzer
 import (
 	"CIHunter/src/models"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
+	"os"
 	"sort"
 	"strings"
 )
@@ -33,8 +35,8 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 	models.DB.Create(&ghUses)
 }
 
-// analyzePopularUses
-func analyzePopularNUses(n int) {
+// analyzePopularNthUses
+func analyzePopularNthUses(n int) {
 	m := make(map[string]int)
 
 	rows, _ := models.DB.Model(&GHUse{}).Rows()
@@ -75,8 +77,14 @@ func analyzePopularNUses(n int) {
 		return ss[i].Value > ss[j].Value
 	})
 
-	fmt.Println("Script\t\t\t\tOccurrences")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Scripts", "Occurrences", "Coverage"})
 	for i := 0; i < n; i++ {
-		fmt.Printf("%s\t\t%d\n", ss[i].Key, ss[i].Value)
+		table.Append([]string{
+			fmt.Sprint(ss[i].Key),
+			fmt.Sprint(ss[i].Value),
+			"None",
+		})
 	}
+	table.Render()
 }
