@@ -13,11 +13,11 @@ import (
 
 // Analyze the collected data
 func Analyze() {
-	//prepare()
+	prepare()
 
 	output()
 
-	// finish
+	// finish()
 }
 
 type GHMeasure struct {
@@ -60,9 +60,9 @@ func prepare() {
 // TODO drop all tables when pipeline is done
 func finish() {
 	//models.DB.Migrator().DropTable(&GHRunner{})
-	//models.DB.Migrator().DropTable(&GHUse{})
-	//models.DB.Migrator().DropTable(&GHJob{})
-	//models.DB.Migrator().DropTable(&GHMeasure{})
+	models.DB.Migrator().DropTable(&GHUse{})
+	models.DB.Migrator().DropTable(&GHJob{})
+	models.DB.Migrator().DropTable(&GHMeasure{})
 }
 
 func output() {
@@ -90,11 +90,11 @@ func output() {
 	//------//
 	fmt.Println("\n[How scripts are imported]")
 	models.DB.Model(&GHUse{}).Count(&c)
-	fmt.Printf("Total occurances of `uses` field: %d\n", c)
+	fmt.Printf("Total occurrences of `uses` field: %d\n", c)
 	models.DB.Model(&GHUse{}).Where("use LIKE ?", "docker://%").Count(&c)
-	fmt.Printf("Total occurances of docker images: %d\n", c)
+	fmt.Printf("Total occurrences of docker images: %d\n", c)
 	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
-	fmt.Printf("Total occurances of self-written scripts: %d\n", c)
+	fmt.Printf("Total occurrences of self-written scripts: %d\n", c)
 
 	n := 30
 	fmt.Println("\n[Popular", n, "scripts]")
