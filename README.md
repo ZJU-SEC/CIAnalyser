@@ -7,6 +7,8 @@
 - Golang
 - PostgreSQL
 
+Prepare yourself a `config.ini` configuration according to `config.ini.tmpl`.
+
 ### :bulb: Dockerized PostgreSQL
 
 To run a dockerized PostgreSQL, check [this](https://hub.docker.com/_/postgres).
