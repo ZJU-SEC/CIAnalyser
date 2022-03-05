@@ -4,11 +4,14 @@ import (
 	"CIHunter/src/config"
 	"CIHunter/src/models"
 	"fmt"
+	"github.com/shomali11/parallelizer"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // Analyze the collected data
@@ -17,7 +20,7 @@ func Analyze() {
 
 	output()
 
-	// finish()
+	//finish()
 }
 
 type GHMeasure struct {
@@ -44,6 +47,26 @@ var Count = GlobalCount{
 	TotalProcessed:    0,
 	TotalAuthors:      0,
 	TotalHasGHAction:  0,
+}
+
+// countAuthor increment the count for the total authors
+func countAuthor() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	Count.TotalAuthors++
+
+	mutex.Unlock()
+}
+
+// countRepo increment the count for the total repositories
+func countRepo() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	Count.TotalHasGHAction++
+
+	mutex.Unlock()
 }
 
 // prepare tables
@@ -99,26 +122,42 @@ func output() {
 	n := 30
 	fmt.Println("\n[Popular", n, "scripts]")
 	analyzePopularNthUses(n)
+
+	fmt.Println("\n[Possible scripts containing CVEs]")
+	analyzeCVE()
 }
 
 func traverse() {
+	group := parallelizer.NewGroup(
+		parallelizer.WithPoolSize(config.WORKER),
+		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),
+	)
+	defer group.Close()
+
 	authorDirList, _ := ioutil.ReadDir(config.WORKFLOWS_PATH)
 	for _, authorDir := range authorDirList {
 		if !authorDir.IsDir() {
 			continue // not dir, skip
 		}
 
-		Count.TotalAuthors++ // count this author
+		group.Add(func() {
+			traverseAuthor(authorDir)
+		})
+	}
+}
 
-		repoDirList, _ := ioutil.ReadDir(path.Join(config.WORKFLOWS_PATH, authorDir.Name()))
-		for _, repoDir := range repoDirList {
-			if repoDir.IsDir() {
-				Count.TotalHasGHAction++
-				repoPath := path.Join(config.WORKFLOWS_PATH, authorDir.Name(), repoDir.Name())
+func traverseAuthor(authorDir fs.FileInfo) {
+	countAuthor()
 
-				// analyze this repository specifically
-				analyzeRepo(repoPath)
-			}
+	repoDirList, _ := ioutil.ReadDir(path.Join(config.WORKFLOWS_PATH, authorDir.Name()))
+	for _, repoDir := range repoDirList {
+		if repoDir.IsDir() {
+			countRepo()
+
+			repoPath := path.Join(config.WORKFLOWS_PATH, authorDir.Name(), repoDir.Name())
+
+			// analyze this repository specifically
+			analyzeRepo(repoPath)
 		}
 	}
 }
