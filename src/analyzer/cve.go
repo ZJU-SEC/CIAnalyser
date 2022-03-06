@@ -25,7 +25,7 @@ func analyzeCVE() {
 		var uses []GHUse
 
 		// match `uses`
-		models.DB.Where("use LIKE ?", script+"%").Find(&uses)
+		models.DB.Where("usecases LIKE ?", script+"%").Find(&uses)
 
 		for _, u := range uses {
 			var job GHJob

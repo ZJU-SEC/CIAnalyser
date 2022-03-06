@@ -4,7 +4,8 @@ import (
 	"CIHunter/src/analyzer"
 	"CIHunter/src/config"
 	"CIHunter/src/models"
-	"CIHunter/src/web"
+	"CIHunter/src/scripts"
+	"CIHunter/src/usecases"
 )
 
 func main() {
@@ -17,10 +18,14 @@ func main() {
 	// crawl gitstar-ranking.com
 	switch config.STAGE {
 	case 1:
-		web.CrawlGHAPI()
+		usecases.Index()
 	case 2:
-		web.CrawlActions()
+		usecases.Clone()
 	case 3:
+		scripts.Index()
+	case 4:
+		scripts.Clone()
+	case 5:
 		analyzer.Analyze()
 	}
 }

@@ -55,7 +55,7 @@ func analyzePopularNthUses(n int) {
 			continue // fast return
 		}
 
-		// calculate the use frequency
+		// calculate the usecases frequency
 		if val, ok := m[body]; ok {
 			m[body] = val + 1
 		} else {

@@ -72,7 +72,7 @@ func commonKeysMatch(a map[string]interface{}, b map[string]interface{}) bool {
 	return true
 }
 
-// ContainerSpec is the specification of the container to use for the job
+// ContainerSpec is the specification of the container to usecases for the job
 type ContainerSpec struct {
 	Image       string            `yaml:"image"`
 	Env         map[string]string `yaml:"env"`

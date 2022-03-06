@@ -30,9 +30,4 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
-
-	err = DB.AutoMigrate(Repo{})
-	if err != nil {
-		panic(err)
-	}
 }

@@ -1,4 +1,4 @@
-package web
+package usecases
 
 import (
 	"CIHunter/src/config"
@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func CrawlActions() {
+func Clone() {
 	os.RemoveAll(config.REPOS_PATH)
 
 	group := parallelizer.NewGroup(

@@ -114,9 +114,9 @@ func output() {
 	fmt.Println("\n[How scripts are imported]")
 	models.DB.Model(&GHUse{}).Count(&c)
 	fmt.Printf("Total occurrences of `uses` field: %d\n", c)
-	models.DB.Model(&GHUse{}).Where("use LIKE ?", "docker://%").Count(&c)
+	models.DB.Model(&GHUse{}).Where("usecases LIKE ?", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of docker images: %d\n", c)
-	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
+	models.DB.Model(&GHUse{}).Where("usecases NOT LIKE ? AND usecases NOT LIKE ?", "%@%", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of self-written scripts: %d\n", c)
 
 	n := 30
