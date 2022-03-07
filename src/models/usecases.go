@@ -26,12 +26,10 @@ func CreateRepo(href string) {
 	if res.Error == gorm.ErrRecordNotFound {
 		repo.Ref = href
 		if err := DB.Create(&repo).Error; err != nil {
-			fmt.Println("[ERR] cannot create️", href, err)
+			fmt.Println("[ERR] cannot index usecase", href, err)
 		} else {
 			fmt.Println("✔", href, "created")
 		}
-	} else if config.DEBUG {
-		fmt.Println("⚙️", href)
 	}
 
 	mutex.Unlock()

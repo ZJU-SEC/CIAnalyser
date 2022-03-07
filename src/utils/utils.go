@@ -34,6 +34,17 @@ func RandomIntArray(min, max int) []int {
 	return intArray
 }
 
+func ShuffleStringArray(src []string) []string {
+	final := make([]string, len(src))
+	rand.Seed(time.Now().UnixNano())
+	perm := rand.Perm(len(src))
+
+	for i, v := range perm {
+		final[v] = src[i]
+	}
+	return final
+}
+
 // CommonCollector return a base collector
 func CommonCollector() *colly.Collector {
 	c := colly.NewCollector()
@@ -61,10 +72,10 @@ func retryRequest(r *colly.Request, maxRetries int) int {
 	}
 	if retriesLeft > 0 {
 		r.Ctx.Put("retriesLeft", retriesLeft-1)
-		time.Sleep(time.Duration(50) * time.Millisecond)
+		time.Sleep(time.Duration(config.TRYOUT-retriesLeft) * time.Second)
 		r.Retry()
 	} else {
-		fmt.Println("❗️ cannot fetch", r.URL)
+		fmt.Println("! cannot fetch", r.URL)
 	}
 	return retriesLeft
 }
