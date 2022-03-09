@@ -90,3 +90,9 @@ func TrimRunner(runners []string) []string {
 
 	return finalRunners
 }
+
+func TrimEscape(v string) string {
+	trimPrefix := strings.TrimPrefix(v, "${{")
+	trimSuffix := strings.TrimSuffix(trimPrefix, "}}")
+	return strings.TrimSpace(trimSuffix)
+}

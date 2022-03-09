@@ -24,6 +24,6 @@ func analyzeJobs(f *os.File, measure *GHMeasure) {
 		models.DB.Create(&ghJob)
 
 		analyzeUses(job, &ghJob)
-		//analyzeRunners(job, &ghJob)
+		analyzeRunners(job, &ghJob)
 	}
 }

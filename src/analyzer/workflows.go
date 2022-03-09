@@ -3,9 +3,11 @@ package analyzer
 import (
 	"CIHunter/src/utils"
 	"fmt"
+	"github.com/robertkrimen/otto"
 	"gopkg.in/yaml.v3"
 	"log"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -101,6 +103,23 @@ type Step struct {
 	//TimeoutMinutes   int64             `yaml:"timeout-minutes"`
 }
 
+// Environments returns string-based key=value map for a step
+func (s *Step) Environment() map[string]string {
+	return environment(s.Env)
+}
+
+// GetEnv gets the env for a step
+func (s *Step) GetEnv() map[string]string {
+	env := s.Environment()
+
+	for k, v := range s.With {
+		envKey := regexp.MustCompile("[^A-Z0-9-]").ReplaceAllString(strings.ToUpper(k), "_")
+		envKey = fmt.Sprintf("INPUT_%s", strings.ToUpper(envKey))
+		env[envKey] = v
+	}
+	return env
+}
+
 // RunsOn list for Job. Note that RunsOn will interpolate matrix automatically
 func (j *Job) RunsOn() []string {
 	switch j.RawRunsOn.Kind {
@@ -114,16 +133,17 @@ func (j *Job) RunsOn() []string {
 		if !strings.Contains(val, "${{") || !strings.Contains(val, "}}") {
 			return []string{val}
 		} else {
-			matrixes := j.GetMatrixes()
-			var osList []string
-			for _, ele := range matrixes {
-				for k, v := range ele {
-					if fmt.Sprint(k) == "os" || fmt.Sprint(k) == "platform" {
-						osList = append(osList, fmt.Sprint(v))
-					}
-				}
+			cmd := utils.TrimEscape(val)
+			var runners []string
+
+			for _, matrix := range j.GetMatrixes() {
+				vm := otto.New()
+				vm.Set("matrix", matrix)
+				rawRunner, _ := vm.Run(cmd)
+				runner, _ := rawRunner.ToString()
+				runners = append(runners, runner)
 			}
-			return osList
+			return runners
 		}
 	case yaml.SequenceNode:
 		var val []string
@@ -134,6 +154,21 @@ func (j *Job) RunsOn() []string {
 		return val
 	}
 	return nil
+}
+
+func environment(yml yaml.Node) map[string]string {
+	env := make(map[string]string)
+	if yml.Kind == yaml.MappingNode {
+		if err := yml.Decode(&env); err != nil {
+			log.Fatal(err)
+		}
+	}
+	return env
+}
+
+// Environment returns string-based key=value map for a job
+func (j *Job) Environment() map[string]string {
+	return environment(j.Env)
 }
 
 // Matrix decodes RawMatrix YAML node

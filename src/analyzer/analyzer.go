@@ -24,15 +24,16 @@ func Analyze() {
 }
 
 type GHMeasure struct {
-	ID                 uint `gorm:"primaryKey;autoIncrement"`
-	RepoRef            string
-	ConfigurationCount int `gorm:"default:0"`
+	ID                 uint   `gorm:"primaryKey;autoIncrement"`
+	RepoRef            string `gorm:"uniqueIndex"`
+	ConfigurationCount int    `gorm:"default:0"`
 }
 
 type GHJob struct {
-	ID          uint `gorm:"primaryKey;autoIncrement"`
-	GHMeasureID uint
-	GHMeasure   GHMeasure `gorm:"foreignKey:GHMeasureID"`
+	ID             uint `gorm:"primaryKey;autoIncrement"`
+	GHMeasureID    uint
+	GHMeasure      GHMeasure `gorm:"foreignKey:GHMeasureID"`
+	PassCredential bool      `gorm:"default:false"`
 }
 
 type GlobalCount struct {
@@ -114,17 +115,17 @@ func output() {
 	fmt.Println("\n[How scripts are imported]")
 	models.DB.Model(&GHUse{}).Count(&c)
 	fmt.Printf("Total occurrences of `uses` field: %d\n", c)
-	models.DB.Model(&GHUse{}).Where("usecases LIKE ?", "docker://%").Count(&c)
+	models.DB.Model(&GHUse{}).Where("use LIKE ?", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of docker images: %d\n", c)
-	models.DB.Model(&GHUse{}).Where("usecases NOT LIKE ? AND usecases NOT LIKE ?", "%@%", "docker://%").Count(&c)
+	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of self-written scripts: %d\n", c)
 
-	n := 30
+	n := 20
 	fmt.Println("\n[Popular", n, "scripts]")
 	analyzePopularNthUses(n)
 
-	fmt.Println("\n[Possible scripts containing CVEs]")
-	analyzeCVE()
+	//fmt.Println("\n[Possible scripts containing CVEs]")
+	//analyzeCVE()
 }
 
 func traverse() {
@@ -164,6 +165,9 @@ func traverseAuthor(authorDir fs.FileInfo) {
 
 // analyzeRepo glob the given path, check yaml files and process
 func analyzeRepo(repoPath string) {
+	var mutex sync.Mutex
+	mutex.Lock()
+
 	// create measure record
 	measure := GHMeasure{
 		RepoRef:            strings.TrimPrefix(repoPath, config.WORKFLOWS_PATH),
@@ -190,4 +194,6 @@ func analyzeRepo(repoPath string) {
 
 		return nil
 	})
+
+	mutex.Unlock()
 }

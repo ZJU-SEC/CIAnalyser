@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"CIHunter/src/utils"
 	"fmt"
 )
 
@@ -14,10 +13,8 @@ type GHRunner struct {
 }
 
 func analyzeRunners(job *Job, ghJob *GHJob) {
-	runners := utils.TrimRunner(job.RunsOn())
+	//runners := utils.TrimRunner(job.RunsOn())
 
 	// FIXME interoperate yaml syntax based on js runtime
-	if len(runners) == 0 {
-		fmt.Println(job.RunsOn())
-	}
+	fmt.Println(job.RunsOn())
 }

@@ -141,5 +141,7 @@ func parseEntry(href string) {
 	})
 
 	c.Visit(DOMAIN + href)
-	script.Create()
+	if len(script.SrcRef) > 0 && len(script.Name) > 0 {
+		script.Create()
+	}
 }

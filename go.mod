@@ -5,7 +5,9 @@ go 1.17
 require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gocolly/colly v1.2.0
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/otiai10/copy v1.7.0
+	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/shomali11/parallelizer v0.0.0-20210506023428-ed2dd4732c78
 	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
@@ -44,7 +46,6 @@ require (
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
@@ -56,5 +57,6 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

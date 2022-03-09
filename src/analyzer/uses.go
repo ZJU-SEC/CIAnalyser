@@ -4,6 +4,7 @@ import (
 	"CIHunter/src/models"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
+	"gorm.io/gorm"
 	"os"
 	"sort"
 	"strings"
@@ -32,6 +33,7 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 	}
 
 	// create ghUses
+
 	models.DB.Create(&ghUses)
 }
 
@@ -83,8 +85,38 @@ func analyzePopularNthUses(n int) {
 		table.Append([]string{
 			fmt.Sprint(ss[i].Key),
 			fmt.Sprint(ss[i].Value),
-			"None",
+			//fmt.Sprintf("%.2f%", findUsesCoverage(ss[i].Key)*100),
+			"none",
 		})
 	}
 	table.Render()
+}
+
+// findUsesCoverage
+func findUsesCoverage(script string) float64 {
+	rows, _ := models.DB.Model(&GHMeasure{}).Rows()
+	count := 0
+	var totRepos int64 = 0
+	models.DB.Model(&GHMeasure{}).Count(&totRepos)
+
+	for rows.Next() {
+		var measure GHMeasure
+		var jobs []GHJob
+
+		// retrieve jobs according to each measure
+		models.DB.ScanRows(rows, &measure)
+		models.DB.Where("gh_measure_id = ?", measure.ID).Find(&jobs)
+
+		for _, j := range jobs {
+			err := models.DB.Where("gh_job_id = ? AND use LIKE ?", j.ID, script+"%").First(&GHUse{}).Error
+
+			if err != gorm.ErrRecordNotFound {
+				count++
+				break
+			}
+		}
+	}
+
+	fmt.Println("FUCK")
+	return float64(count) / float64(totRepos)
 }
