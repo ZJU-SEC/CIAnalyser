@@ -133,15 +133,12 @@ func (j *Job) RunsOn() []string {
 		if !strings.Contains(val, "${{") || !strings.Contains(val, "}}") {
 			return []string{val}
 		} else {
-			cmd := utils.TrimEscape(val)
 			var runners []string
 
 			for _, matrix := range j.GetMatrixes() {
 				vm := otto.New()
 				vm.Set("matrix", matrix)
-				rawRunner, _ := vm.Run(cmd)
-				runner, _ := rawRunner.ToString()
-				runners = append(runners, runner)
+				runners = append(runners, interpolate(val, vm))
 			}
 			return runners
 		}
@@ -154,6 +151,31 @@ func (j *Job) RunsOn() []string {
 		return val
 	}
 	return nil
+}
+
+func interpolate(in string, vm *otto.Otto) string {
+	pattern := regexp.MustCompile(`\${{\s*(.+?)\s*}}`)
+	out := in
+	for {
+		out = pattern.ReplaceAllStringFunc(in, func(match string) string {
+			// Extract and trim the actual expression inside ${{...}} delimiters
+			expression := pattern.ReplaceAllString(match, "$1")
+
+			// Evaluate the expression and retrieve errors if any
+			rawExpr, _ := vm.Run(expression)
+			expr, _ := rawExpr.ToString()
+
+			return expr
+		})
+
+		if out == in {
+			// No replacement occurred, we're done!
+			break
+		}
+		in = out
+	}
+
+	return out
 }
 
 func environment(yml yaml.Node) map[string]string {
@@ -209,12 +231,7 @@ func (j *Job) GetMatrixes() []map[string]interface{} {
 					}
 				case interface{}:
 					v := v.(map[string]interface{})
-					for k := range v {
-						if _, ok := m[k]; ok {
-							includes = append(includes, v)
-							break
-						}
-					}
+					includes = append(includes, v)
 				}
 			}
 			delete(m, "include")
