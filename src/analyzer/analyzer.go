@@ -74,16 +74,15 @@ func countRepo() {
 func prepare() {
 	models.DB.Migrator().CreateTable(&GHMeasure{})
 	models.DB.Migrator().CreateTable(&GHJob{})
-	//models.DB.Migrator().CreateTable(&GHRunner{})
+	models.DB.Migrator().CreateTable(&GHRunner{})
 	models.DB.Migrator().CreateTable(&GHUse{})
 
 	// traverse the workflows
 	traverse()
 }
 
-// TODO drop all tables when pipeline is done
 func finish() {
-	//models.DB.Migrator().DropTable(&GHRunner{})
+	models.DB.Migrator().DropTable(&GHRunner{})
 	models.DB.Migrator().DropTable(&GHUse{})
 	models.DB.Migrator().DropTable(&GHJob{})
 	models.DB.Migrator().DropTable(&GHMeasure{})
@@ -165,9 +164,6 @@ func traverseAuthor(authorDir fs.FileInfo) {
 
 // analyzeRepo glob the given path, check yaml files and process
 func analyzeRepo(repoPath string) {
-	var mutex sync.Mutex
-	mutex.Lock()
-
 	// create measure record
 	measure := GHMeasure{
 		RepoRef:            strings.TrimPrefix(repoPath, config.WORKFLOWS_PATH),
@@ -194,6 +190,4 @@ func analyzeRepo(repoPath string) {
 
 		return nil
 	})
-
-	mutex.Unlock()
 }

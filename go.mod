@@ -10,7 +10,7 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/shomali11/parallelizer v0.0.0-20210506023428-ed2dd4732c78
 	gopkg.in/ini.v1 v1.66.2
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.1
 )

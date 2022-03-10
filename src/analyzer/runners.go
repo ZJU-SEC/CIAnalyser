@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"fmt"
+	"CIHunter/src/models"
 	"strings"
 )
 
@@ -15,12 +15,27 @@ type GHRunner struct {
 
 func analyzeRunners(job *Job, ghJob *GHJob) {
 	runners := TrimRunner(job.RunsOn())
-	fmt.Println(runners)
-	// TODO create runner records in database
+
+	if runners == nil {
+		return
+	}
+
+	for _, r := range runners {
+		models.DB.Create(&GHRunner{
+			GHJobID:    ghJob.ID,
+			Job:        *ghJob,
+			Runner:     r,
+			SelfHosted: isSelfHosted(r),
+		})
+	}
 }
 
 // TrimRunner first regulars the runner labels, then removes the duplicate runners
 func TrimRunner(runners []string) []string {
+	if runners == nil {
+		return nil
+	}
+
 	var finalRunners []string
 
 	contains := func(s []string, e string) bool {
@@ -45,20 +60,9 @@ func TrimRunner(runners []string) []string {
 		return res
 	}
 
-	latestMapping := map[string]string{
-		"ubuntu-latest":  "ubuntu-20.04",
-		"macos-latest":   "macos-11",
-		"windows-latest": "windows-2019",
-	}
-
 	for _, runner := range runners {
-		// lowercase the macOS runner
-		if runner == "macOS-11" || runner == "macOS-10.15" || runner == "macOS-latest" {
-			runner = strings.ToLower(runner)
-		}
-
-		if val, ok := latestMapping[runner]; ok {
-			runner = val
+		if runner == "undefined" {
+			continue // skip `undefined` runners
 		}
 
 		if !contains(finalRunners, runner) {
@@ -67,4 +71,35 @@ func TrimRunner(runners []string) []string {
 	}
 
 	return trimDuplicate(finalRunners)
+}
+
+// isSelfHosted checks if a runner is self-hosted
+func isSelfHosted(runner string) bool {
+	splitLabels := strings.Split(runner, "-")
+
+	if len(splitLabels) != 2 {
+		return true
+	}
+
+	os := strings.ToLower(splitLabels[0])
+	ver := strings.ToLower(splitLabels[1])
+
+	switch os {
+	case "ubuntu":
+		if ver == "latest" || ver == "20.04" || ver == "18.04" || ver == "16.04" {
+			return false
+		}
+	case "macos":
+		if ver == "latest" || ver == "11" || ver == "11.0" || ver == "10.15" {
+			return false
+		}
+	case "windows":
+		if ver == "latest" || ver == "2016" || ver == "2019" || ver == "2022" {
+			return false
+		}
+	default:
+		return true
+	}
+
+	return false
 }

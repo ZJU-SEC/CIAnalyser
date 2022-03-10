@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/robertkrimen/otto"
 	"gopkg.in/yaml.v3"
-	"log"
 	"reflect"
 	"regexp"
 	"strings"
@@ -127,7 +126,7 @@ func (j *Job) RunsOn() []string {
 		var val string
 		err := j.RawRunsOn.Decode(&val)
 		if err != nil {
-			log.Fatal(err)
+			return nil
 		}
 
 		if !strings.Contains(val, "${{") || !strings.Contains(val, "}}") {
@@ -146,7 +145,7 @@ func (j *Job) RunsOn() []string {
 		var val []string
 		err := j.RawRunsOn.Decode(&val)
 		if err != nil {
-			log.Fatal(err)
+			return nil
 		}
 		return val
 	}
@@ -182,7 +181,7 @@ func environment(yml yaml.Node) map[string]string {
 	env := make(map[string]string)
 	if yml.Kind == yaml.MappingNode {
 		if err := yml.Decode(&env); err != nil {
-			log.Fatal(err)
+			return nil
 		}
 	}
 	return env
@@ -202,7 +201,7 @@ func (j *Job) Matrix() map[string][]interface{} {
 	if j.Strategy.RawMatrix.Kind == yaml.MappingNode {
 		var val map[string][]interface{}
 		if err := j.Strategy.RawMatrix.Decode(&val); err != nil {
-			log.Fatal(err)
+			return nil
 		}
 		return val
 	}
@@ -242,9 +241,6 @@ func (j *Job) GetMatrixes() []map[string]interface{} {
 				for k := range e {
 					if _, ok := m[k]; ok {
 						excludes = append(excludes, e)
-					} else {
-						// We fail completely here because that's what GitHub does for non-existing matrix keys, fail on exclude, silent skip on include
-						log.Fatalf("The workflow is not valid. Matrix exclude key '%s' does not match any key within the matrix", k)
 					}
 				}
 			}
