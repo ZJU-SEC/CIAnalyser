@@ -37,8 +37,8 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 	models.DB.Create(&ghUses)
 }
 
-// analyzePopularNthUses
-func analyzePopularNthUses(n int) {
+// outputPopularNthUses
+func outputPopularNthUses(n int) {
 	m := make(map[string]int)
 
 	rows, _ := models.DB.Model(&GHUse{}).Rows()
@@ -75,18 +75,21 @@ func analyzePopularNthUses(n int) {
 		ss = append(ss, kv{k, v})
 	}
 
+	// calculate total scripts
+	var totJobs int64
+	models.DB.Model(&GHJob{}).Count(&totJobs)
+
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].Value > ss[j].Value
 	})
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Scripts", "Occurrences", "Coverage"})
+	table.SetHeader([]string{"Scripts", "Occurrences", "Coverage Among Jobs"})
 	for i := 0; i < n; i++ {
 		table.Append([]string{
 			fmt.Sprint(ss[i].Key),
 			fmt.Sprint(ss[i].Value),
-			//fmt.Sprintf("%.2f%", findUsesCoverage(ss[i].Key)*100),
-			"none",
+			fmt.Sprintf("%.2f", float64(ss[i].Value)/float64(totJobs)*100),
 		})
 	}
 	table.Render()
@@ -117,6 +120,5 @@ func findUsesCoverage(script string) float64 {
 		}
 	}
 
-	fmt.Println("FUCK")
 	return float64(count) / float64(totRepos)
 }

@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"CIHunter/src/models"
+	"fmt"
 	"strings"
 )
 
@@ -102,4 +103,40 @@ func isSelfHosted(runner string) bool {
 	}
 
 	return false
+}
+
+func outputRunners() {
+	var totRunners int64
+	var c int64
+	models.DB.Model(&GHRunner{}).Count(&totRunners)
+	fmt.Printf("Total occurrences of runners: %d\n", totRunners)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "ubuntu%").Count(&c)
+	fmt.Printf("Occurrences of ubuntu runners: %d, Ratio: %.2f%%\n", c, float64(c)/float64(totRunners)*100)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND (runner ILIKE ? OR runner ILIKE ?)",
+		false, "ubuntu-20.04", "ubuntu-latest").Count(&c)
+	fmt.Printf("\tubuntu-20.04: %d\n", c)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "ubuntu-18.04").Count(&c)
+	fmt.Printf("\tubuntu-18.04: %d\n", c)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "ubuntu-16.04").Count(&c)
+	fmt.Printf("\tubuntu-16.04: %d\n", c)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "macos%").Count(&c)
+	fmt.Printf("Occurrences of macos runners: %d, Ratio: %.2f%%\n", c, float64(c)/float64(totRunners)*100)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND (runner ILIKE ? OR runner ILIKE ?)",
+		false, "macos-11%", "macos-latest").Count(&c)
+	fmt.Printf("\tmacos-11: %d\n", c)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "macos-10.15%").Count(&c)
+	fmt.Printf("\tmacos-10.15: %d\n", c)
+
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ? AND runner ILIKE ?", false, "windows%").Count(&c)
+	fmt.Printf("Occurrences of windows runners: %d, Ratio: %.2f%%\n", c, float64(c)/float64(totRunners)*100)
+	models.DB.Model(&GHRunner{}).Where("self_hosted = ?", true).Count(&c)
+	fmt.Printf("Occurrences of self-hosted runners: %d, Ratio: %.2f%%\n", c, float64(c)/float64(totRunners)*100)
+	fmt.Printf("Occurrences of self-hosted runners: %d, Ratio: %.2f%%\n", c, float64(c)/float64(totRunners)*100)
 }

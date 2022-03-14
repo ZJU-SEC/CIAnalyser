@@ -5,12 +5,7 @@ import (
 	"CIHunter/src/models"
 	"fmt"
 	"github.com/shomali11/parallelizer"
-	"io/fs"
 	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -76,6 +71,7 @@ func prepare() {
 	models.DB.Migrator().CreateTable(&GHJob{})
 	models.DB.Migrator().CreateTable(&GHRunner{})
 	models.DB.Migrator().CreateTable(&GHUse{})
+	models.DB.Migrator().CreateTable(&GHCredential{})
 
 	// traverse the workflows
 	traverse()
@@ -86,6 +82,7 @@ func finish() {
 	models.DB.Migrator().DropTable(&GHUse{})
 	models.DB.Migrator().DropTable(&GHJob{})
 	models.DB.Migrator().DropTable(&GHMeasure{})
+	models.DB.Migrator().DropTable(&GHCredential{})
 }
 
 func output() {
@@ -119,12 +116,16 @@ func output() {
 	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of self-written scripts: %d\n", c)
 
-	n := 20
+	n := 10
 	fmt.Println("\n[Popular", n, "scripts]")
-	analyzePopularNthUses(n)
+	outputPopularNthUses(n)
 
 	//fmt.Println("\n[Possible scripts containing CVEs]")
 	//analyzeCVE()
+
+	fmt.Println("\n[Runtime Environments]")
+	outputRunners()
+
 }
 
 func traverse() {
@@ -144,50 +145,4 @@ func traverse() {
 			traverseAuthor(authorDir)
 		})
 	}
-}
-
-func traverseAuthor(authorDir fs.FileInfo) {
-	countAuthor()
-
-	repoDirList, _ := ioutil.ReadDir(path.Join(config.WORKFLOWS_PATH, authorDir.Name()))
-	for _, repoDir := range repoDirList {
-		if repoDir.IsDir() {
-			countRepo()
-
-			repoPath := path.Join(config.WORKFLOWS_PATH, authorDir.Name(), repoDir.Name())
-
-			// analyze this repository specifically
-			analyzeRepo(repoPath)
-		}
-	}
-}
-
-// analyzeRepo glob the given path, check yaml files and process
-func analyzeRepo(repoPath string) {
-	// create measure record
-	measure := GHMeasure{
-		RepoRef:            strings.TrimPrefix(repoPath, config.WORKFLOWS_PATH),
-		ConfigurationCount: 0,
-	}
-
-	models.DB.Create(&measure)
-
-	filepath.Walk(repoPath, func(p string, info os.FileInfo, err error) error {
-		ext := filepath.Ext(p)
-		if err != nil || info.IsDir() || (ext != ".yml" && ext != ".yaml") {
-			return err
-		}
-
-		measure.ConfigurationCount++
-		models.DB.Save(&measure)
-
-		f, err := os.Open(p)
-		if err != nil {
-			return err
-		}
-
-		analyzeJobs(f, &measure)
-
-		return nil
-	})
 }
