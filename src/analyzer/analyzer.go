@@ -5,13 +5,14 @@ import (
 	"CIHunter/src/models"
 	"fmt"
 	"github.com/shomali11/parallelizer"
+	"github.com/xuri/excelize/v2"
 	"io/ioutil"
 	"sync"
 )
 
 // Analyze the collected data
 func Analyze() {
-	prepare()
+	//prepare()
 
 	output()
 
@@ -25,10 +26,9 @@ type GHMeasure struct {
 }
 
 type GHJob struct {
-	ID             uint `gorm:"primaryKey;autoIncrement"`
-	GHMeasureID    uint
-	GHMeasure      GHMeasure `gorm:"foreignKey:GHMeasureID"`
-	PassCredential bool      `gorm:"default:false"`
+	ID          uint `gorm:"primaryKey;autoIncrement"`
+	GHMeasureID uint
+	GHMeasure   GHMeasure `gorm:"foreignKey:GHMeasureID"`
 }
 
 type GlobalCount struct {
@@ -86,6 +86,8 @@ func finish() {
 }
 
 func output() {
+	f := excelize.NewFile()
+
 	fmt.Println("[Global]")
 	var c int64
 
@@ -116,16 +118,19 @@ func output() {
 	models.DB.Model(&GHUse{}).Where("use NOT LIKE ? AND use NOT LIKE ?", "%@%", "docker://%").Count(&c)
 	fmt.Printf("Total occurrences of self-written scripts: %d\n", c)
 
-	n := 10
-	fmt.Println("\n[Popular", n, "scripts]")
-	outputPopularNthUses(n)
+	outputPopularNthUses(f, 10)
 
-	//fmt.Println("\n[Possible scripts containing CVEs]")
-	//analyzeCVE()
+	//outputCVE()
 
-	fmt.Println("\n[Runtime Environments]")
-	outputRunners()
+	//outputRunners()
+	outputCredentials()
+	outputMaintainersInfluence(f)
 
+	if err := f.SaveAs("hello.xlsx"); err != nil {
+		fmt.Println("Cannot save measurement results due to", err)
+	} else {
+		fmt.Println("Measurement results successfully saved to")
+	}
 }
 
 func traverse() {

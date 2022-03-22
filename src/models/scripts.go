@@ -13,6 +13,7 @@ type Script struct {
 	Name    string
 	SrcRef  string // ref for the source code
 	Checked bool   `gorm:"default:false"`
+	Using   string
 }
 
 func (s *Script) Create() {

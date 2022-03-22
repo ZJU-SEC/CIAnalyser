@@ -10,9 +10,10 @@ import (
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID      uint   `gorm:"primaryKey;autoIncrement;"`
-	Ref     string `gorm:"unique"`
-	Checked bool   `gorm:"default:false"`
+	ID          uint   `gorm:"primaryKey;autoIncrement;"`
+	Ref         string `gorm:"unique"`
+	Checked     bool   `gorm:"default:false"`
+	Influential bool   `gorm:"default:false"` // mark the usecase as influential
 }
 
 // CreateRepo a repo

@@ -3,9 +3,8 @@ package analyzer
 import (
 	"CIHunter/src/models"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
-	"os"
 	"sort"
 	"strings"
 )
@@ -17,7 +16,7 @@ type GHUse struct {
 	Use     string
 }
 
-// analyzeUses analyzes how 3ed-party scripts are imported
+// analyzeUses analyzes how 3rd-party scripts are imported
 func analyzeUses(job *Job, ghJob *GHJob) {
 	var ghUses []GHUse
 
@@ -33,12 +32,13 @@ func analyzeUses(job *Job, ghJob *GHJob) {
 	}
 
 	// create ghUses
-
 	models.DB.Create(&ghUses)
 }
 
 // outputPopularNthUses
-func outputPopularNthUses(n int) {
+func outputPopularNthUses(f *excelize.File, n int) {
+	fmt.Println("\n[Popular", n, "scripts]")
+
 	m := make(map[string]int)
 
 	rows, _ := models.DB.Model(&GHUse{}).Rows()
@@ -76,23 +76,16 @@ func outputPopularNthUses(n int) {
 	}
 
 	// calculate total scripts
-	var totJobs int64
-	models.DB.Model(&GHJob{}).Count(&totJobs)
-
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].Value > ss[j].Value
 	})
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Scripts", "Occurrences", "Coverage Among Jobs"})
 	for i := 0; i < n; i++ {
-		table.Append([]string{
-			fmt.Sprint(ss[i].Key),
-			fmt.Sprint(ss[i].Value),
-			fmt.Sprintf("%.2f", float64(ss[i].Value)/float64(totJobs)*100),
-		})
+		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", i+1), ss[i].Key)
+		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", i+1), findReposCountByScript(ss[i].Key))
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", i+1), findJobsCountByScript(ss[i].Key))
+		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", i+1), ss[i].Value)
 	}
-	table.Render()
 }
 
 // findUsesCoverage
@@ -121,4 +114,20 @@ func findUsesCoverage(script string) float64 {
 	}
 
 	return float64(count) / float64(totRepos)
+}
+
+func findJobsCountByScript(s string) int {
+	var c int64
+	models.DB.Model(&GHUse{}).Where("use LIKE ?", s+"%").
+		Distinct("gh_job_id").Count(&c)
+	return int(c)
+}
+
+func findReposCountByScript(s string) int {
+	var c int64
+	models.DB.Model(&GHUse{}).Select("use, gh_measure_id").
+		Joins("left join gh_jobs ON gh_uses.gh_job_id = gh_jobs.id").
+		Where("use LIKE ?", s+"%").Distinct("gh_measure_id").Count(&c)
+
+	return int(c)
 }

@@ -111,6 +111,10 @@ func (s *Step) Environment() map[string]string {
 func (s *Step) GetEnv() map[string]string {
 	env := s.Environment()
 
+	if env == nil {
+		env = make(map[string]string)
+	}
+
 	for k, v := range s.With {
 		envKey := regexp.MustCompile("[^A-Z0-9-]").ReplaceAllString(strings.ToUpper(k), "_")
 		envKey = fmt.Sprintf("INPUT_%s", strings.ToUpper(envKey))

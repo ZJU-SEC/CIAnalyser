@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"CIHunter/src/models"
+	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"os"
 )
@@ -16,7 +17,8 @@ var CVEList = map[string]string{
 	"CVE-2020-14188": "atlassian/gajira-create",
 }
 
-func analyzeCVE() {
+func outputCVE() {
+	fmt.Println("\n[Possible scripts containing CVEs]")
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"CVE", "Repository", "Script"})
 

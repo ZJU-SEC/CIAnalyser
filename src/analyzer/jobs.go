@@ -71,6 +71,10 @@ func analyzeJobs(f *os.File, measure *GHMeasure) {
 
 	// map result from workflow to measure / uses
 	for _, job := range w.Jobs {
+		if job == nil {
+			continue // skip null jobs
+		}
+
 		// create measure record
 		ghJob := GHJob{
 			GHMeasureID: measure.ID,
