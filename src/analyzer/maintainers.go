@@ -8,12 +8,17 @@ import (
 )
 
 // outputMaintainersInfluence scan the uses and calculate the maintainers' influence
-// maintainer A --> script A/A --- influenced usecases
+// maintainers A --> script A/A --- influenced usecases
 //              --> script A/B --- influenced usecases
-// maintainer B --> script B/A --- influenced usecases
+// maintainers B --> script B/A --- influenced usecases
 func outputMaintainersInfluence(f *excelize.File) {
 	fmt.Println("\n[Maintainers' Influence]")
 
+	type influenceCount struct {
+		script []string
+		repo   int
+		job    int
+	}
 	extract := func(s string) (string, string) {
 		return strings.Split(s, "/")[0], strings.Split(s, "@")[0]
 	}

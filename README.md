@@ -4,6 +4,7 @@
 
 ## :gear: Prerequisite
 
+- Docker
 - Golang
 - PostgreSQL
 

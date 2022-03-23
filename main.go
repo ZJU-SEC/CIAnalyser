@@ -3,6 +3,7 @@ package main
 import (
 	"CIHunter/src/analyzer"
 	"CIHunter/src/config"
+	"CIHunter/src/maintainers"
 	"CIHunter/src/models"
 	"CIHunter/src/scripts"
 	"CIHunter/src/usecases"
@@ -17,15 +18,15 @@ func main() {
 
 	// crawl gitstar-ranking.com
 	switch config.STAGE {
-	case 1:
+	case "index-maintainers":
+		maintainers.Index()
+	case "index-usecases":
 		usecases.Index()
-	case 2:
+	case "clone-usecases":
 		usecases.Clone()
-	case 3:
+	case "index-scripts":
 		scripts.Index()
-	case 4:
-		scripts.Clone()
-	case 5:
+	case "analyze":
 		analyzer.Analyze()
 	}
 }
