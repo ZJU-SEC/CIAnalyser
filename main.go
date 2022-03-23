@@ -7,6 +7,7 @@ import (
 	"CIHunter/src/models"
 	"CIHunter/src/scripts"
 	"CIHunter/src/usecases"
+	"fmt"
 )
 
 func main() {
@@ -28,5 +29,7 @@ func main() {
 		scripts.Index()
 	case "analyze":
 		analyzer.Analyze()
+	default:
+		fmt.Println("not a valid stage code")
 	}
 }

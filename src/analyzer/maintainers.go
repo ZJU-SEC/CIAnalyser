@@ -14,11 +14,11 @@ import (
 func outputMaintainersInfluence(f *excelize.File) {
 	fmt.Println("\n[Maintainers' Influence]")
 
-	type influenceCount struct {
-		script []string
-		repo   int
-		job    int
-	}
+	//type influenceCount struct {
+	//	script []string
+	//	repo   int
+	//	job    int
+	//}
 	extract := func(s string) (string, string) {
 		return strings.Split(s, "/")[0], strings.Split(s, "@")[0]
 	}
