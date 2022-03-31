@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"CIHunter/src/config"
+	"CIHunter/config"
 	"fmt"
 	"github.com/gocolly/colly"
 	"math/rand"
@@ -55,10 +55,12 @@ func CommonCollector() *colly.Collector {
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
-		if r.StatusCode == 404 {
+		if r.StatusCode == 404 || r.StatusCode == 500 {
 			return
 		}
-		//fmt.Println("[debug]", r.StatusCode, r.Request.URL)
+		if config.DEBUG {
+			fmt.Println("[debug]", r.StatusCode, r.Request.URL)
+		}
 		retryRequest(r.Request, config.TRYOUT)
 	})
 

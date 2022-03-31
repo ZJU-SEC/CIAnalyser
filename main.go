@@ -1,12 +1,11 @@
 package main
 
 import (
-	"CIHunter/src/analyzer"
-	"CIHunter/src/config"
-	"CIHunter/src/maintainers"
-	"CIHunter/src/models"
-	"CIHunter/src/scripts"
-	"CIHunter/src/usecases"
+	"CIHunter/config"
+	"CIHunter/pkg/contributor"
+	"CIHunter/pkg/model"
+	"CIHunter/pkg/repo"
+	"CIHunter/pkg/script"
 	"fmt"
 )
 
@@ -15,20 +14,18 @@ func main() {
 	config.Init()
 
 	// initialize models
-	models.Init()
+	model.Init()
 
 	// crawl gitstar-ranking.com
 	switch config.STAGE {
-	case "index-maintainers":
-		maintainers.Index()
-	case "index-usecases":
-		usecases.Index()
-	case "clone-usecases":
-		usecases.Clone()
-	case "index-scripts":
-		scripts.Index()
-	case "analyze":
-		analyzer.Analyze()
+	case "index-repo":
+		repo.Index()
+	case "clone-repo":
+		repo.Clone()
+	case "extract-script":
+		script.Extract()
+	case "crawl-contributor":
+		contributor.Crawl()
 	default:
 		fmt.Println("not a valid stage code")
 	}

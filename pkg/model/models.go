@@ -1,7 +1,7 @@
-package models
+package model
 
 import (
-	"CIHunter/src/config"
+	"CIHunter/config"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

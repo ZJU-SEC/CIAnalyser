@@ -1,9 +1,9 @@
-package usecases
+package repo
 
 import (
-	"CIHunter/src/config"
-	"CIHunter/src/models"
-	"CIHunter/src/utils"
+	"CIHunter/config"
+	"CIHunter/pkg/model"
+	"CIHunter/utils"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -26,7 +26,7 @@ func Clone() {
 	defer group.Close()
 
 	// get database iterator
-	rows, err := models.DB.Model(&models.Repo{}).Where("checked = ?", false).Rows()
+	rows, err := model.DB.Model(&Repo{}).Where("checked = ?", false).Rows()
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func Clone() {
 	var notCheckedCount int64
 	var randomSkip int
 
-	models.DB.Model(&models.Repo{}).Where("checked = ?", false).Count(&notCheckedCount)
+	model.DB.Model(&Repo{}).Where("checked = ?", false).Count(&notCheckedCount)
 	rand.Seed(time.Now().UnixNano())
 	if notCheckedCount == 0 {
 		randomSkip = 0
@@ -53,8 +53,8 @@ func Clone() {
 	time.Sleep(1 * time.Second)
 	count = 0
 	for rows.Next() && count < config.BATCH_SIZE {
-		var repo models.Repo
-		models.DB.ScanRows(rows, &repo)
+		var repo Repo
+		model.DB.ScanRows(rows, &repo)
 
 		if !repo.Checked {
 			group.Add(func() {
@@ -68,7 +68,7 @@ func Clone() {
 }
 
 // analyze the repository
-func downloadRepo(repo *models.Repo) {
+func downloadRepo(repo *Repo) {
 	c := make(chan error, 1)
 
 	// clone worker
@@ -97,7 +97,7 @@ func downloadRepo(repo *models.Repo) {
 	repo.Check()
 }
 
-func clone(repo *models.Repo) error {
+func clone(repo *Repo) error {
 	if _, err := git.PlainClone(repo.LocalPath(), false, &git.CloneOptions{
 		URL:   repo.GitURL(),
 		Depth: 1,

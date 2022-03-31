@@ -1,7 +1,8 @@
-package models
+package repo
 
 import (
-	"CIHunter/src/config"
+	"CIHunter/config"
+	"CIHunter/pkg/model"
 	"fmt"
 	"gorm.io/gorm"
 	"path"
@@ -10,10 +11,9 @@ import (
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID          uint   `gorm:"primaryKey;autoIncrement;"`
-	Ref         string `gorm:"unique"`
-	Checked     bool   `gorm:"default:false"`
-	Influential bool   `gorm:"default:false"` // mark the usecase as influential
+	ID      uint   `gorm:"primaryKey;autoIncrement"`
+	Ref     string `gorm:"uniqueKey"`
+	Checked bool   `gorm:"default:false"`
 }
 
 // CreateRepo a repo
@@ -22,11 +22,11 @@ func CreateRepo(href string) {
 	mutex.Lock()
 
 	repo := Repo{}
-	res := DB.Where("ref = ?", href).First(&repo)
+	res := model.DB.Where("ref = ?", href).First(&repo)
 
 	if res.Error == gorm.ErrRecordNotFound {
 		repo.Ref = href
-		if err := DB.Create(&repo).Error; err != nil {
+		if err := model.DB.Create(&repo).Error; err != nil {
 			fmt.Println("[ERR] cannot index usecase", href, err)
 		} else {
 			fmt.Println("✔", href, "created")
@@ -40,7 +40,7 @@ func (r *Repo) Check() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := DB.Model(&Repo{}).Where("ref = ?", r.Ref).Update("checked", true)
+	res := model.DB.Model(&Repo{}).Where("ref = ?", r.Ref).Update("checked", true)
 	if res.Error != nil {
 		fmt.Println("[ERR] cannot check", r.Ref, res.Error)
 	} else {
@@ -54,7 +54,7 @@ func (r *Repo) Delete() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := DB.Delete(r)
+	res := model.DB.Delete(r)
 	if res.Error != nil {
 		fmt.Println("[ERR] cannot delete", r.Ref, res.Error)
 	}

@@ -1,9 +1,9 @@
-package usecases
+package repo
 
 import (
-	"CIHunter/src/config"
-	"CIHunter/src/models"
-	"CIHunter/src/utils"
+	"CIHunter/config"
+	"CIHunter/pkg/model"
+	"CIHunter/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly"
@@ -19,7 +19,7 @@ func Index() {
 	const FromGitstar = false
 
 	// AutoMigrate Repo table
-	err := models.DB.AutoMigrate(models.Repo{})
+	err := model.DB.AutoMigrate(Repo{})
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func crawlGitstarRepo(page int) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_item" {
 			group.Add(func() {
-				models.CreateRepo(link)
+				CreateRepo(link)
 			})
 		}
 	})
@@ -115,7 +115,7 @@ func crawlGitstarUserOrgRepo(href string) {
 		link := e.Attr("href")
 		if e.Attr("class") == "list-group-item paginated_full_item" {
 			group.Add(func() {
-				models.CreateRepo(link)
+				CreateRepo(link)
 			})
 		}
 	})
@@ -187,7 +187,7 @@ func parseAPI(since int) {
 		json.Unmarshal(r.Body, &repos)
 
 		for _, repo := range repos {
-			models.CreateRepo("/" + repo.Ref)
+			CreateRepo("/" + repo.Ref)
 		}
 	})
 

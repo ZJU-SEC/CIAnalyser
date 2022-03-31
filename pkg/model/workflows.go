@@ -1,7 +1,7 @@
-package analyzer
+package model
 
 import (
-	"CIHunter/src/utils"
+	"CIHunter/utils"
 	"fmt"
 	"github.com/robertkrimen/otto"
 	"gopkg.in/yaml.v3"
