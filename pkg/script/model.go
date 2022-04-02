@@ -1,30 +1,14 @@
 package script
 
 import (
+	"CIHunter/config"
 	"CIHunter/pkg/model"
 	"fmt"
 	"gorm.io/gorm/clause"
+	"path"
 	"strings"
 	"sync"
 )
-
-type Measure struct {
-	ID          uint   `gorm:"primaryKey;autoIncrement"`
-	Name        string `gorm:"uniqueKey"`
-	Influential bool   `gorm:"default:false"`
-}
-
-func (m *Measure) create() {
-	var mutex sync.Mutex
-	mutex.Lock()
-
-	err := model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(m).Error
-	if err != nil {
-		fmt.Println("[ERR] cannot create script", m.Name, err)
-	}
-
-	mutex.Unlock()
-}
 
 // Script schema for script's metadata
 type Script struct {
@@ -50,14 +34,48 @@ func (s *Script) fetchOrCreate() {
 	mutex.Unlock()
 }
 
+func (s *Script) Check() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	res := model.DB.Model(s).Update("checked", true)
+	if res.Error != nil {
+		fmt.Println("[ERR] cannot check", s.Ref, res.Error)
+	} else {
+		fmt.Println("✔", s.Ref, "processed")
+	}
+
+	mutex.Unlock()
+}
+
+func (s *Script) Delete() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	res := model.DB.Delete(s)
+	if res.Error != nil {
+		fmt.Println("[ERR] cannot delete", s.Ref, res.Error)
+	}
+
+	mutex.Unlock()
+}
+
 func (s *Script) SrcRef() string {
 	ss := strings.Split(s.Ref, "/")
 	return ss[0] + "/" + ss[1]
 }
 
+func (s *Script) LocalPath() string {
+	return path.Join(config.SCRIPTS_PATH, s.SrcRef())
+}
+
+func (s *Script) GitURL() string {
+	return "https://github.com/" + s.SrcRef() + ".git"
+}
+
 type Usage struct {
 	MeasureID uint
-	Measure   Measure `gorm:"foreignKey:MeasureID"`
+	Measure   model.Measure `gorm:"foreignKey:MeasureID"`
 	ScriptID  uint
 	Script    Script `gorm:"foreignKey:ScriptID"`
 	Use       string

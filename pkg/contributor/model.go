@@ -10,7 +10,7 @@ import (
 
 type Contributor struct {
 	ID   uint   `gorm:"primaryKey" json:"id"`
-	Name string `gorm:"uniqueKey" json:"login"`
+	Name string `gorm:"uniqueIndex" json:"login"`
 }
 
 func (c *Contributor) fetchOrCreate() {

@@ -15,6 +15,7 @@ var STAGE string
 
 // STORAGE
 var REPOS_PATH string
+var SCRIPTS_PATH string
 var WORKFLOWS_PATH string
 var BATCH_SIZE int
 
@@ -53,6 +54,7 @@ func Init() {
 	}
 	REPOS_PATH = STORAGESection.Key("REPOS_PATH").String()
 	WORKFLOWS_PATH = STORAGESection.Key("WORKFLOWS_PATH").String()
+	SCRIPTS_PATH = STORAGESection.Key("SCRIPTS_PATH").String()
 	BATCH_SIZE = STORAGESection.Key("BATCH_SIZE").MustInt(1024)
 
 	// load WEB section

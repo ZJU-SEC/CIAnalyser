@@ -3,7 +3,10 @@ package script
 import (
 	"CIHunter/config"
 	"CIHunter/pkg/model"
+	"fmt"
+	"github.com/go-git/go-git/v5"
 	"github.com/shomali11/parallelizer"
+	"os"
 )
 
 func Clone() {
@@ -20,9 +23,32 @@ func Clone() {
 		model.DB.ScanRows(rows, &s)
 
 		group.Add(func() {
-			// TODO clone repo
+			s := s
+			cloneScript(&s)
 		})
 	}
 
 	group.Wait()
+}
+
+func cloneScript(script *Script) {
+	if _, err := os.Stat(script.LocalPath()); !os.IsNotExist(err) {
+		script.Check()
+		return
+	}
+
+	if _, err := git.PlainClone(script.LocalPath(), false, &git.CloneOptions{
+		URL:        script.GitURL(),
+		NoCheckout: true,
+	}); err != nil {
+		switch err {
+		//case transport.ErrEmptyRemoteRepository, transport.ErrAuthenticationRequired:
+		//	script.Delete()
+		default:
+			fmt.Println("[ERR] cannot clone", script.SrcRef(), err)
+		}
+		os.RemoveAll(script.LocalPath())
+		return
+	}
+	script.Check()
 }
