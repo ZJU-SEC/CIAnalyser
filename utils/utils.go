@@ -34,6 +34,17 @@ func RandomIntArray(min, max int) []int {
 	return intArray
 }
 
+func ShuffleStringArray(src []string) []string {
+	final := make([]string, len(src))
+	rand.Seed(time.Now().UnixNano())
+	perm := rand.Perm(len(src))
+
+	for i, v := range perm {
+		final[v] = src[i]
+	}
+	return final
+}
+
 // CommonCollector return a base collector
 func CommonCollector() *colly.Collector {
 	c := colly.NewCollector()

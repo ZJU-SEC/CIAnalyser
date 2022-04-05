@@ -7,6 +7,7 @@ import (
 	"CIHunter/pkg/model"
 	"CIHunter/pkg/repo"
 	"CIHunter/pkg/script"
+	"CIHunter/pkg/verified"
 	"fmt"
 )
 
@@ -29,6 +30,8 @@ func main() {
 		script.Clone()
 	case "crawl-contributor":
 		contributor.Crawl()
+	case "crawl-verified":
+		verified.Crawl()
 	case "extract-credential":
 		credential.Extract()
 	default:
