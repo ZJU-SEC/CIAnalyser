@@ -34,6 +34,8 @@ func main() {
 		verified.Crawl()
 	case "extract-credential":
 		credential.Extract()
+	case "label-usage":
+		script.Label()
 	default:
 		fmt.Println("not a valid stage code")
 	}

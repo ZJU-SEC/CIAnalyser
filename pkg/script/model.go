@@ -74,11 +74,14 @@ func (s *Script) GitURL() string {
 }
 
 type Usage struct {
+	ID        uint `gorm:"primaryKey;autoIncrement"`
 	MeasureID uint
 	Measure   model.Measure `gorm:"foreignKey:MeasureID"`
 	ScriptID  uint
 	Script    Script `gorm:"foreignKey:ScriptID"`
 	Use       string
+	UseBranch bool `gorm:"default:false"`
+	UseLatest bool `gorm:"default:false"`
 }
 
 func (u *Usage) create() {
@@ -90,6 +93,25 @@ func (u *Usage) create() {
 	}
 
 	mutex.Unlock()
+}
+
+func (u *Usage) Update() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	model.DB.Save(u)
+
+	mutex.Unlock()
+}
+
+func (u *Usage) SrcRef() string {
+	script := strings.Split(u.Use, "@")[0]
+	ss := strings.Split(script, "/")
+	return ss[0] + "/" + ss[1]
+}
+
+func (u *Usage) Version() string {
+	return strings.Split(u.Use, "@")[1]
 }
 
 //func Index() {
