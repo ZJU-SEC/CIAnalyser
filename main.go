@@ -2,6 +2,7 @@ package main
 
 import (
 	"CIHunter/config"
+	"CIHunter/pkg/analyzer"
 	"CIHunter/pkg/contributor"
 	"CIHunter/pkg/credential"
 	"CIHunter/pkg/model"
@@ -36,6 +37,8 @@ func main() {
 		credential.Extract()
 	case "label-usage":
 		script.Label()
+	case "analyze":
+		analyzer.Analyze()
 	default:
 		fmt.Println("not a valid stage code")
 	}

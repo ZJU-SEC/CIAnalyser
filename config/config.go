@@ -11,6 +11,7 @@ var Config *ini.File
 var WORKER int
 var QUEUE_SIZE int
 var DEBUG bool
+var REPORT string
 var STAGE string
 
 // STORAGE
@@ -45,6 +46,7 @@ func Init() {
 	WORKER = APPSection.Key("WORKER").MustInt(16)
 	QUEUE_SIZE = APPSection.Key("QUEUE_SIZE").MustInt(128)
 	DEBUG = APPSection.Key("DEBUG").MustBool(false)
+	REPORT = APPSection.Key("REPORT").String()
 	STAGE = APPSection.Key("STAGE").String()
 
 	// load STORAGE section

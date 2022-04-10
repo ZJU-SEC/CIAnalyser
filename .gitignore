@@ -18,3 +18,4 @@ CIHunter
 # vendor/
 .idea/
 config.ini
+report.xlsx
