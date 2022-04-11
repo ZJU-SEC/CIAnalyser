@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"CIHunter/config"
+	"CIHunter/pkg/credential"
 	"CIHunter/pkg/model"
 	"CIHunter/pkg/script"
 	"CIHunter/pkg/verified"
@@ -14,6 +15,7 @@ func Analyze() {
 
 	reportVerified(f)
 	reportContributor(f)
+	reportCredential(f)
 
 	if err := f.SaveAs(config.REPORT); err != nil {
 		fmt.Println("[ERR] cannot save report to", config.REPORT)
@@ -89,4 +91,41 @@ func reportContributor(f *excelize.File) {
 	f.NewSheet(sheet)
 
 	// TODO
+}
+
+func reportCredential(f *excelize.File) {
+	const sheet = "credential"
+	f.NewSheet(sheet)
+
+	f.SetCellValue(sheet, "A1", "# of credentials")
+	f.SetCellValue(sheet, "B1", "# of repos")
+	f.SetCellValue(sheet, "C1", "% of repos")
+
+	// calculate number of total repositories
+	var totalR int64
+	model.DB.Model(&model.Measure{}).Count(&totalR)
+
+	const MAX_CRED = 5
+	for i := 1; i <= MAX_CRED; i++ {
+		var c int64
+
+		if i == MAX_CRED {
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+1),
+				fmt.Sprintf(">=%d", i))
+			model.DB.Model(&credential.Credential{}).Group("measure_id").
+				Having("count(*) >= ?", i).Distinct("measure_id").Count(&c)
+		} else {
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+1), i)
+			model.DB.Model(&credential.Credential{}).Group("measure_id").
+				Having("count(*) = ?", i).Distinct("measure_id").Count(&c)
+		}
+
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+1), c)
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+1),
+			fmt.Sprintf("%.2f%%", float64(c)/float64(totalR)*100))
+	}
+}
+
+func reportVul(f *excelize.File) {
+
 }

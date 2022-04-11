@@ -10,6 +10,7 @@ import (
 	"CIHunter/pkg/script"
 	"CIHunter/pkg/verified"
 	"fmt"
+	"os"
 )
 
 func main() {
@@ -19,8 +20,11 @@ func main() {
 	// initialize models
 	model.Init()
 
-	// crawl gitstar-ranking.com
-	switch config.STAGE {
+	if len(os.Args) < 2 {
+		panic("require an argument")
+	}
+
+	switch os.Args[1] {
 	case "index-repo":
 		repo.Index()
 	case "clone-repo":
@@ -37,6 +41,8 @@ func main() {
 		credential.Extract()
 	case "label-usage":
 		script.Label()
+	case "parse-using":
+		script.ParseUsing()
 	case "analyze":
 		analyzer.Analyze()
 	default:

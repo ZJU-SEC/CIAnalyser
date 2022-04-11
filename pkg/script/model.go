@@ -69,6 +69,14 @@ func (s *Script) LocalPath() string {
 	return path.Join(config.SCRIPTS_PATH, s.SrcRef())
 }
 
+func (s *Script) LocalYMLPath() string {
+	return path.Join(config.SCRIPTS_PATH, s.Ref, "action.yml")
+}
+
+func (s *Script) LocalYAMLPath() string {
+	return path.Join(config.SCRIPTS_PATH, s.Ref, "action.yaml")
+}
+
 func (s *Script) GitURL() string {
 	return "https://github.com/" + s.SrcRef() + ".git"
 }

@@ -6,17 +6,20 @@ import (
 	"os"
 )
 
-// TODO ParseEnv
-func ParseEnv() {
+func ParseUsing() {
 	rows, _ := model.DB.Model(&Script{}).Where("checked = ?", true).Rows()
 
 	for rows.Next() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
 
-		f, err := os.Open(s.LocalPath())
+		// parse yaml or yml file
+		f, err := os.Open(s.LocalYMLPath())
 		if err != nil {
-			continue
+			f, err = os.Open(s.LocalYAMLPath())
+			if err != nil {
+				continue
+			}
 		}
 		dec := yaml.NewDecoder(f)
 		a := model.Action{}
@@ -24,6 +27,7 @@ func ParseEnv() {
 			continue
 		}
 
-		s.Using = a.Using
+		model.DB.Model(&Script{}).Where("id = ?", s.ID).
+			Update("using", a.Runs.Using)
 	}
 }

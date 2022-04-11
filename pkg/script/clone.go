@@ -38,8 +38,7 @@ func cloneScript(script *Script) {
 	}
 
 	if _, err := git.PlainClone(script.LocalPath(), false, &git.CloneOptions{
-		URL:        script.GitURL(),
-		NoCheckout: true,
+		URL: script.GitURL(),
 	}); err != nil {
 		switch err {
 		//case transport.ErrEmptyRemoteRepository, transport.ErrAuthenticationRequired:

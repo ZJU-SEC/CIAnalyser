@@ -12,7 +12,6 @@ var WORKER int
 var QUEUE_SIZE int
 var DEBUG bool
 var REPORT string
-var STAGE string
 
 // STORAGE
 var REPOS_PATH string
@@ -47,7 +46,6 @@ func Init() {
 	QUEUE_SIZE = APPSection.Key("QUEUE_SIZE").MustInt(128)
 	DEBUG = APPSection.Key("DEBUG").MustBool(false)
 	REPORT = APPSection.Key("REPORT").String()
-	STAGE = APPSection.Key("STAGE").String()
 
 	// load STORAGE section
 	STORAGESection, err := Config.GetSection("STORAGE")

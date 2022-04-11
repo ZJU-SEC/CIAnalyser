@@ -18,7 +18,7 @@ func (m *Measure) FetchOrCreate() {
 
 	res := DB.Clauses(clause.OnConflict{DoNothing: true}).Create(m)
 	if res.Error != nil {
-		fmt.Println("[ERR] cannot create script", m.Name, res.Error)
+		fmt.Println("[ERR] cannot create measure", m.Name, res.Error)
 	} else if res.RowsAffected == 0 {
 		DB.Where(Measure{Name: m.Name}).First(m)
 	}
