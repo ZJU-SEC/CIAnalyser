@@ -16,6 +16,7 @@ func Analyze() {
 	reportVerified(f)
 	reportContributor(f)
 	reportCredential(f)
+	reportMaintainer(f)
 
 	if err := f.SaveAs(config.REPORT); err != nil {
 		fmt.Println("[ERR] cannot save report to", config.REPORT)
@@ -86,11 +87,11 @@ func reportVerified(f *excelize.File) {
 			voRepo, float64(voRepo*100)/float64(tRepo)))
 }
 
+// TODO
 func reportContributor(f *excelize.File) {
 	const sheet = "contributor"
 	f.NewSheet(sheet)
 
-	// TODO
 }
 
 func reportCredential(f *excelize.File) {
@@ -126,6 +127,61 @@ func reportCredential(f *excelize.File) {
 	}
 }
 
+// TODO
 func reportVul(f *excelize.File) {
 
+}
+
+func reportMaintainer(f *excelize.File) {
+	const sheet = "maintainer"
+	f.NewSheet(sheet)
+
+	f.SetCellValue(sheet, "A1", "maintainer")
+	f.SetCellValue(sheet, "B1", "# of influenced repos")
+	f.SetCellValue(sheet, "C1", "% of influenced repos")
+
+	f.SetCellValue(sheet, "E1", "unverified maintainer")
+	f.SetCellValue(sheet, "F1", "# of influenced repos")
+	f.SetCellValue(sheet, "G1", "% of influenced repos")
+
+	var totalR int64
+	model.DB.Model(&model.Measure{}).Count(&totalR)
+
+	type Result struct {
+		Maintainer string
+		Count      int
+	}
+	var result []Result
+
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
+		Where("verified = ?", true).
+		Group("maintainer").
+		Select("COUNT(DISTINCT(measure_id)) AS count", "maintainer").
+		Order("count DESC").
+		Limit(10).
+		Scan(&result)
+
+	for i := 0; i < len(result); i++ {
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2), result[i].Maintainer)
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), result[i].Count)
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2),
+			float64(result[i].Count)/float64(totalR))
+	}
+
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
+		Where("verified = ?", false).
+		Group("maintainer, verified").
+		Select("COUNT(DISTINCT(measure_id)) AS count", "maintainer", "verified").
+		Order("count DESC").
+		Limit(10).
+		Scan(&result)
+
+	for i := 0; i < len(result); i++ {
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", i+2), result[i].Maintainer)
+		f.SetCellValue(sheet, fmt.Sprintf("F%d", i+2), result[i].Count)
+		f.SetCellValue(sheet, fmt.Sprintf("G%d", i+2),
+			float64(result[i].Count)/float64(totalR))
+	}
 }
