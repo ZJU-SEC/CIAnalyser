@@ -1,9 +1,12 @@
 package script
 
 import (
+	"CIHunter/config"
 	"CIHunter/pkg/model"
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path"
 )
 
 func ParseUsing() {
@@ -18,16 +21,30 @@ func ParseUsing() {
 		if err != nil {
 			f, err = os.Open(s.LocalYAMLPath())
 			if err != nil {
-				continue
+				if parseDockerfile(path.Join(config.SCRIPTS_PATH, s.Ref, "Dockerfile")) {
+					s.Using = "docker"
+				}
 			}
 		}
-		dec := yaml.NewDecoder(f)
-		a := model.Action{}
-		if err := dec.Decode(&a); err != nil {
-			continue
+
+		if err == nil {
+			dec := yaml.NewDecoder(f)
+			a := model.Action{}
+			if err := dec.Decode(&a); err != nil {
+				fmt.Println(s.Ref)
+				continue
+			}
+			s.Using = a.Runs.Using
 		}
 
-		model.DB.Model(&Script{}).Where("id = ?", s.ID).
-			Update("using", a.Runs.Using)
+		model.DB.Save(&s)
 	}
+}
+
+func parseDockerfile(path string) bool {
+	_, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	return true
 }

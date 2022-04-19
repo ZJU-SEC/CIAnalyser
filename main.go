@@ -33,6 +33,8 @@ func main() {
 		script.Extract()
 	case "clone-script":
 		script.Clone()
+	case "categorize-script":
+		script.Categorize()
 	case "crawl-contributor":
 		contributor.Crawl()
 	case "crawl-verified":

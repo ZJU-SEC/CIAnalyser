@@ -12,12 +12,14 @@ import (
 
 // Script schema for script's metadata
 type Script struct {
-	ID         uint   `gorm:"primaryKey;autoIncrement;"`
-	Ref        string `gorm:"uniqueIndex"`
-	Maintainer string
-	Verified   bool `gorm:"default:false"`
-	Checked    bool `gorm:"default:false"`
-	Using      string
+	ID           uint   `gorm:"primaryKey;autoIncrement;"`
+	Ref          string `gorm:"uniqueIndex"`
+	Maintainer   string
+	Verified     bool `gorm:"default:false"`
+	Checked      bool `gorm:"default:false"`
+	Using        string
+	IsDeployment bool `gorm:"default:false"`
+	IsRelease    bool `gorm:"default:false"`
 }
 
 func (s *Script) fetchOrCreate() {
@@ -79,6 +81,10 @@ func (s *Script) LocalYAMLPath() string {
 
 func (s *Script) GitURL() string {
 	return "https://github.com/" + s.SrcRef() + ".git"
+}
+
+func (s *Script) SrcURL() string {
+	return "https://github.com/" + s.SrcRef()
 }
 
 type Usage struct {
