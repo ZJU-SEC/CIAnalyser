@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/exp/slices"
 	"strings"
+	"time"
 )
 
 func Label() {
 	rows, _ := model.DB.Model(&Script{}).Where("checked = ?", true).Rows()
+
+	// record scripts' tags & branches
 	tagMap := make(map[string][]string)
 	branchMap := make(map[string][]string)
 
@@ -18,23 +22,40 @@ func Label() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
 
-		r, err := git.PlainOpen(s.LocalPath())
+		repo, err := git.PlainOpen(s.LocalPath())
 		if err != nil {
 			fmt.Println("[ERR] cannot open", s.SrcRef(), "as Git repository")
-		} else {
-			branches, _ := r.Branches()
-			tags, _ := r.Tags()
-			branches.ForEach(func(r *plumbing.Reference) error {
-				b := strings.TrimPrefix(r.Name().String(), "refs/heads/")
-				branchMap[s.Ref] = append(branchMap[s.Ref], b)
-				return nil
-			})
-			tags.ForEach(func(r *plumbing.Reference) error {
-				t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
-				tagMap[s.Ref] = append(tagMap[s.Ref], t)
-				return nil
-			})
+			continue
 		}
+		// traverse tags & branches
+		branches, _ := repo.Branches()
+		tags, _ := repo.Tags()
+		branches.ForEach(func(r *plumbing.Reference) error {
+			b := strings.TrimPrefix(r.Name().String(), "refs/heads/")
+			branchMap[s.Ref] = append(branchMap[s.Ref], b)
+			return nil
+		})
+
+		var at time.Time
+		tags.ForEach(func(r *plumbing.Reference) error {
+			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
+			tagMap[s.Ref] = append(tagMap[s.Ref], t)
+			co, err := repo.CommitObject(r.Hash())
+			if err == nil {
+				at = co.Author.When
+			}
+			return nil
+		})
+		s.ReleaseAt = uint(at.Unix())
+
+		// find update_at
+		cIter, _ := repo.CommitObjects()
+		cIter.ForEach(func(c *object.Commit) error {
+			at = c.Author.When
+			return nil
+		})
+		s.UpdateAt = uint(at.Unix())
+		model.DB.Save(&s)
 	}
 
 	// traverse usage

@@ -20,6 +20,8 @@ type Script struct {
 	Using        string
 	IsDeployment bool `gorm:"default:false"`
 	IsRelease    bool `gorm:"default:false"`
+	UpdateAt     uint
+	ReleaseAt    uint
 }
 
 func (s *Script) fetchOrCreate() {

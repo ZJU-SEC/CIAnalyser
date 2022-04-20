@@ -19,10 +19,20 @@ func Analyze() {
 	reportMaintainer(f)
 	reportCategory(f)
 	reportUsing(f)
+	reportVersion(f)
+	reportCVE(f)
 
 	if err := f.SaveAs(config.REPORT); err != nil {
 		fmt.Println("[ERR] cannot save report to", config.REPORT)
 	}
+}
+
+func reportVersion(f *excelize.File) {
+	// TODO report Version
+}
+
+func reportCVE(f *excelize.File) {
+	// TODO report CVE
 }
 
 func reportUsing(f *excelize.File) {
@@ -32,15 +42,15 @@ func reportUsing(f *excelize.File) {
 	f.SetCellValue(sheet, "A1", "Item")
 	f.SetCellValue(sheet, "B1", "Docker")
 	f.SetCellValue(sheet, "C1", "Node.js")
-	f.SetCellValue(sheet, "D1", "Others")
+	f.SetCellValue(sheet, "D1", "Raw Command")
 
 	f.SetCellValue(sheet, "A2", "# of scripts")
 	f.SetCellValue(sheet, "A3", "% of scripts")
 	f.SetCellValue(sheet, "A4", "# of usage")
 	f.SetCellValue(sheet, "A5", "% of usage")
 
-	var NofDockerScript, NofNodeScript, totalS,
-		NofDockerUsage, NofNodeUsage, NofOtherUsage, totalR int64
+	var NofDockerScript, NofNodeScript, NofRCScript, totalS,
+		NofDockerUsage, NofNodeUsage, NofRCUsage, totalR int64
 
 	model.DB.Model(&script.Script{}).Count(&totalS)
 	model.DB.Model(&model.Measure{}).Count(&totalR)
@@ -49,6 +59,8 @@ func reportUsing(f *excelize.File) {
 		Where("\"using\" ILIKE ?", "docker%").Count(&NofDockerScript)
 	model.DB.Model(&script.Script{}).
 		Where("\"using\" ILIKE ?", "node%").Count(&NofNodeScript)
+	model.DB.Model(&script.Script{}).
+		Where("\"using\" ILIKE ?", "composite").Count(&NofRCScript)
 
 	model.DB.Model(&script.Usage{}).
 		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
@@ -60,16 +72,24 @@ func reportUsing(f *excelize.File) {
 		Distinct("measure_id").Count(&NofNodeUsage)
 	model.DB.Model(&script.Usage{}).
 		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
-		Where("\"using\" NOT ILIKE ? AND \"using\" NOT ILIKE ?", "docker", "node%").
-		Distinct("measure_id").Count(&NofOtherUsage)
+		Where("\"using\" ILIKE ?", "composite").
+		Distinct("measure_id").Count(&NofRCUsage)
 
 	f.SetCellValue(sheet, "B2", NofDockerScript)
 	f.SetCellValue(sheet, "C2", NofNodeScript)
-	f.SetCellValue(sheet, "D2", totalS-NofDockerScript-NofNodeScript)
+	f.SetCellValue(sheet, "D2", NofRCScript)
+
+	f.SetCellValue(sheet, "B3", float64(NofDockerScript)/float64(totalS))
+	f.SetCellValue(sheet, "C3", float64(NofNodeScript)/float64(totalS))
+	f.SetCellValue(sheet, "D3", float64(NofRCScript)/float64(totalS))
 
 	f.SetCellValue(sheet, "B4", NofDockerUsage)
 	f.SetCellValue(sheet, "C4", NofNodeUsage)
-	f.SetCellValue(sheet, "D4", NofOtherUsage)
+	f.SetCellValue(sheet, "D4", NofRCUsage)
+
+	f.SetCellValue(sheet, "B5", float64(NofDockerUsage)/float64(totalR))
+	f.SetCellValue(sheet, "C5", float64(NofNodeUsage)/float64(totalR))
+	f.SetCellValue(sheet, "D5", float64(NofRCUsage)/float64(totalR))
 }
 
 // TODO
