@@ -37,8 +37,9 @@ func reportVersion(f *excelize.File) {
 
 	iter := 2
 	for year := 2018; year <= 2022; year++ {
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), year)
 		for month := 1; month <= 12; month++ {
-			if year == 2022 && month == 4 {
+			if year == 2022 && month == 5 {
 				break
 			}
 
@@ -55,7 +56,6 @@ func reportVersion(f *excelize.File) {
 			}
 
 			// output date
-			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), fmt.Sprintf("%d.%d", year, month))
 			model.DB.Model(&script.Script{}).
 				Where("update_at >= ? AND update_at < ?", bottomTime, upTime).Count(&c)
 			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), c)
@@ -65,7 +65,6 @@ func reportVersion(f *excelize.File) {
 			iter++
 		}
 	}
-
 }
 
 func reportCVE(f *excelize.File) {
