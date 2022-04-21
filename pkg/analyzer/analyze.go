@@ -88,24 +88,36 @@ func reportCVE(f *excelize.File) {
 	iter := 0
 	for u, cve := range CVEmapping {
 		type Result struct {
-			R string
-			S string
-			U string
+			Name string
+			Ref  string
+			Use  string
 		}
 
 		var result []Result
-		model.DB.Debug().Model(&script.Usage{}).
+		model.DB.Model(&script.Usage{}).
 			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
 			Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+			Select("name", "ref", "use").
 			Where("use ILIKE ?", u+"%").
-			Select("name, ref, use").
+			Where("use NOT ILIKE ?", u+"%@main").
+			Where("use NOT ILIKE ?", u+"%@master").
+			Where("use NOT ILIKE ?", u+"%@master").
+			Where("use NOT ILIKE ?", u+"%@prerelease").
+			Where("use NOT ILIKE ?", u+"%@%/%").
+			Where("use NOT ILIKE ?", "hashicorp/vault-action@v2.4.0").
+			Where("use NOT ILIKE ?", "github/codeql-action/%@v1%").
+			Where("use NOT ILIKE ?", "atlassian/gajira-create@v2.0.1").
+			Where("use NOT ILIKE ?", "atlassian/gajira-comment@v2.0.2").
+			Where("use NOT ILIKE ?", "check-spelling/check-spelling@v0.0.19").
+			Where("use NOT ILIKE ?", "check-spelling/check-spelling@v0.0.20%").
+			Distinct().
 			Scan(&result)
 
 		for _, r := range result {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), cve)
-			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), r.R)
-			f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), r.S)
-			f.SetCellValue(sheet, fmt.Sprintf("D%d", iter), r.U)
+			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), r.Name)
+			f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), r.Ref)
+			f.SetCellValue(sheet, fmt.Sprintf("D%d", iter), r.Use)
 			iter++
 		}
 	}
@@ -235,7 +247,6 @@ func reportVerified(f *excelize.File) {
 func reportContributor(f *excelize.File) {
 	const sheet = "contributor"
 	f.NewSheet(sheet)
-
 }
 
 func reportCredential(f *excelize.File) {
