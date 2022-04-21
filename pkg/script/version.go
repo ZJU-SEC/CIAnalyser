@@ -8,7 +8,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/exp/slices"
 	"strings"
-	"time"
 )
 
 func Label() {
@@ -36,25 +35,26 @@ func Label() {
 			return nil
 		})
 
-		var at time.Time
 		tags.ForEach(func(r *plumbing.Reference) error {
 			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
 			tagMap[s.Ref] = append(tagMap[s.Ref], t)
 			co, err := repo.CommitObject(r.Hash())
 			if err == nil {
-				at = co.Author.When
+				if uint(co.Author.When.Unix()) > s.ReleaseAt {
+					s.ReleaseAt = uint(co.Author.When.Unix())
+				}
 			}
 			return nil
 		})
-		s.ReleaseAt = uint(at.Unix())
 
 		// find update_at
 		cIter, _ := repo.CommitObjects()
 		cIter.ForEach(func(c *object.Commit) error {
-			at = c.Author.When
+			if uint(c.Author.When.Unix()) > s.UpdateAt {
+				s.UpdateAt = uint(c.Author.When.Unix())
+			}
 			return nil
 		})
-		s.UpdateAt = uint(at.Unix())
 		model.DB.Save(&s)
 	}
 

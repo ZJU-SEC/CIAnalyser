@@ -29,10 +29,52 @@ func Analyze() {
 
 func reportVersion(f *excelize.File) {
 	// TODO report Version
+	const sheet = "version"
+
 }
 
 func reportCVE(f *excelize.File) {
-	// TODO report CVE
+	const sheet = "CVE"
+
+	CVEmapping := map[string]string{
+		"check-spelling/check-spelling":             "CVE-2021-32724",
+		"github/codeql-action":                      "CVE-2021-32638",
+		"hashicorp/vault-action":                    "CVE-2021-32074",
+		"ericcornelissen/git-tag-annotation-action": "CVE-2020-15272",
+		"atlassian/gajira-comment":                  "CVE-2020-14189",
+		"atlassian/gajira-create":                   "CVE-2020-14188",
+	}
+
+	f.NewSheet(sheet)
+	f.SetCellValue(sheet, "A1", "CVE")
+	f.SetCellValue(sheet, "B1", "Repository")
+	f.SetCellValue(sheet, "C1", "Script")
+	f.SetCellValue(sheet, "D1", "Usage")
+
+	iter := 0
+	for u, cve := range CVEmapping {
+		type Result struct {
+			R string
+			S string
+			U string
+		}
+
+		var result []Result
+		model.DB.Debug().Model(&script.Usage{}).
+			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+			Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+			Where("use ILIKE ?", u+"%").
+			Select("name, ref, use").
+			Scan(&result)
+
+		for _, r := range result {
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), cve)
+			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), r.R)
+			f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), r.S)
+			f.SetCellValue(sheet, fmt.Sprintf("D%d", iter), r.U)
+			iter++
+		}
+	}
 }
 
 func reportUsing(f *excelize.File) {
@@ -90,10 +132,6 @@ func reportUsing(f *excelize.File) {
 	f.SetCellValue(sheet, "B5", float64(NofDockerUsage)/float64(totalR))
 	f.SetCellValue(sheet, "C5", float64(NofNodeUsage)/float64(totalR))
 	f.SetCellValue(sheet, "D5", float64(NofRCUsage)/float64(totalR))
-}
-
-// TODO
-func reportVul(f *excelize.File) {
 }
 
 func reportVerified(f *excelize.File) {
@@ -227,7 +265,6 @@ func reportMaintainer(f *excelize.File) {
 		Count      int
 	}
 	var result []Result
-
 	model.DB.Model(&script.Usage{}).
 		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
 		Where("verified = ?", true).Group("maintainer").
