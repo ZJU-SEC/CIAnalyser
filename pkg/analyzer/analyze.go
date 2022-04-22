@@ -8,7 +8,6 @@ import (
 	"CIHunter/pkg/verified"
 	"fmt"
 	"github.com/xuri/excelize/v2"
-	"time"
 )
 
 func Analyze() {
@@ -31,39 +30,29 @@ func Analyze() {
 func reportVersion(f *excelize.File) {
 	const sheet = "version"
 	f.NewSheet(sheet)
-	f.SetCellValue(sheet, "A1", "Date")
-	f.SetCellValue(sheet, "B1", "Latest Update")
-	f.SetCellValue(sheet, "C1", "Latest Release")
+	f.SetCellValue(sheet, "A1", "Version Count")
+	f.SetCellValue(sheet, "B1", "# of Repositories")
 
 	iter := 2
-	for year := 2018; year <= 2022; year++ {
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), year)
-		for month := 1; month <= 12; month++ {
-			if year == 2022 && month == 5 {
-				break
-			}
+	for bottom := 0; bottom <= 200; bottom += 10 {
+		var c int64
+		up := bottom + 10
 
-			// calculate bottomTime & upTime
-			var bottomTime, upTime, c int64
-			bottomTime = time.Date(year, time.Month(month),
-				1, 0, 0, 0, 0, time.Local).Unix()
-			if month == 12 {
-				upTime = time.Date(year+1, time.Month(1),
-					1, 0, 0, 0, 0, time.Local).Unix()
-			} else {
-				upTime = time.Date(year, time.Month(month+1),
-					1, 0, 0, 0, 0, time.Local).Unix()
-			}
-
-			// output date
+		if bottom == 200 {
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
+				fmt.Sprintf(">= %d", bottom))
 			model.DB.Model(&script.Script{}).
-				Where("update_at >= ? AND update_at < ?", bottomTime, upTime).Count(&c)
+				Where("version_count >= ?", bottom).Count(&c)
 			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), c)
+		} else {
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
+				fmt.Sprintf("[%d, %d)", bottom, up))
 			model.DB.Model(&script.Script{}).
-				Where("release_at >= ? AND release_at < ?", bottomTime, upTime).Count(&c)
-			f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), c)
-			iter++
+				Where("version_count >= ? AND version_count < ?", bottom, up).Count(&c)
+			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), c)
 		}
+
+		iter++
 	}
 }
 
