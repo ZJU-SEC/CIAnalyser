@@ -34,11 +34,12 @@ func reportVersion(f *excelize.File) {
 	f.SetCellValue(sheet, "B1", "# of Repositories")
 
 	iter := 2
-	for bottom := 0; bottom <= 200; bottom += 10 {
+	THRESHOLD := 100
+	for bottom := 0; bottom <= THRESHOLD; bottom += 10 {
 		var c int64
 		up := bottom + 10
 
-		if bottom == 200 {
+		if bottom == THRESHOLD {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
 				fmt.Sprintf(">= %d", bottom))
 			model.DB.Model(&script.Script{}).
