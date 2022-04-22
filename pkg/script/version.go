@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/exp/slices"
 	"strings"
 )
@@ -35,26 +34,28 @@ func Label() {
 			return nil
 		})
 
+		s.VersionCount = 0 // zero out count of version to persist idempotence
 		tags.ForEach(func(r *plumbing.Reference) error {
 			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
 			tagMap[s.Ref] = append(tagMap[s.Ref], t)
-			co, err := repo.CommitObject(r.Hash())
-			if err == nil {
-				if uint(co.Author.When.Unix()) > s.ReleaseAt {
-					s.ReleaseAt = uint(co.Author.When.Unix())
-				}
-			}
+			s.VersionCount++
+			//co, err := repo.CommitObject(r.Hash())
+			//if err == nil {
+			//if uint(co.Author.When.Unix()) > s.ReleaseAt {
+			//	s.ReleaseAt = uint(co.Author.When.Unix())
+			//}
+			//}
 			return nil
 		})
 
 		// find update_at
-		cIter, _ := repo.CommitObjects()
-		cIter.ForEach(func(c *object.Commit) error {
-			if uint(c.Author.When.Unix()) > s.UpdateAt {
-				s.UpdateAt = uint(c.Author.When.Unix())
-			}
-			return nil
-		})
+		//cIter, _ := repo.CommitObjects()
+		//cIter.ForEach(func(c *object.Commit) error {
+		//if uint(c.Author.When.Unix()) > s.UpdateAt {
+		//	s.UpdateAt = uint(c.Author.When.Unix())
+		//}
+		//return nil
+		//})
 		model.DB.Save(&s)
 	}
 
