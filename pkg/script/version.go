@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/exp/slices"
 	"strings"
 )
@@ -14,7 +15,6 @@ func Label() {
 
 	// record scripts' tags & branches
 	repoMap := make(map[string]*git.Repository)
-	tagMap := make(map[string][]string)
 	branchMap := make(map[string][]string)
 	scriptMap := make(map[string]Script)
 
@@ -40,8 +40,6 @@ func Label() {
 
 		s.VersionCount = 0 // zero out count of version to persist idempotence
 		tags.ForEach(func(r *plumbing.Reference) error {
-			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
-			tagMap[s.Ref] = append(tagMap[s.Ref], t)
 			s.VersionCount++
 			co, err := repo.TagObject(r.Hash())
 			if err == nil {
@@ -71,24 +69,23 @@ func Label() {
 
 		// check tag
 		if repo, ok := repoMap[u.ScriptRef()]; ok {
-
 			if verTag, err := repo.Tag(u.Version()); err == nil {
 				// is a tag
 				u.UseLatest = true
-				for _, tag := range tagMap[u.ScriptRef()] {
-					iterTag, _ := repo.Tag(tag)
-					verObj, _ := repo.TagObject(verTag.Hash())
-					iterObj, _ := repo.TagObject(iterTag.Hash())
-					verTime := verObj.Tagger.When.Unix()
-					iterTime := iterObj.Tagger.When.Unix()
+				verObj, _ := repo.TagObject(verTag.Hash())
+				verTime := verObj.Tagger.When.Unix()
 
+				tagObjs, _ := repo.TagObjects() // get tag iterators
+				tagObjs.ForEach(func(tag *object.Tag) error {
+					iterTime := tag.Tagger.When.Unix()
 					if verTime < iterTime {
 						u.UseLatest = false
-						if iterTime-verTime > u.UpdateLag {
+						if -verTime > u.UpdateLag {
 							u.UpdateLag = iterTime - verTime
 						}
 					}
-				}
+					return nil
+				})
 			}
 
 			if commObj, err := repo.CommitObject(plumbing.NewHash(u.Version())); err == nil {
