@@ -69,8 +69,10 @@ func Label() {
 
 		// check tag
 		if repo, ok := repoMap[u.ScriptRef()]; ok {
+			fmt.Println(u.Version())
 			if verTag, err := repo.Tag(u.Version()); err == nil {
 				// is a tag
+				fmt.Println("is a tag")
 				u.UseLatest = true
 				verObj, err := repo.TagObject(verTag.Hash())
 				if err == nil {
@@ -87,6 +89,8 @@ func Label() {
 						}
 						return nil
 					})
+				} else {
+					fmt.Println("not able to resolve tag")
 				}
 			}
 
