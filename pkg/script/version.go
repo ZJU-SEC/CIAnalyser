@@ -43,10 +43,10 @@ func Label() {
 			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
 			tagMap[s.Ref] = append(tagMap[s.Ref], t)
 			s.VersionCount++
-			co, err := repo.CommitObject(r.Hash())
+			co, err := repo.TagObject(r.Hash())
 			if err == nil {
-				if co.Author.When.Unix() > s.LatestVersionTime {
-					s.LatestVersionTime = co.Author.When.Unix()
+				if co.Tagger.When.Unix() > s.LatestVersionTime {
+					s.LatestVersionTime = co.Tagger.When.Unix()
 				}
 			}
 			return nil
@@ -77,10 +77,10 @@ func Label() {
 				u.UseLatest = true
 				for _, tag := range tagMap[u.ScriptRef()] {
 					iterTag, _ := repo.Tag(tag)
-					verObj, _ := repo.CommitObject(verTag.Hash())
-					iterObj, _ := repo.CommitObject(iterTag.Hash())
-					verTime := verObj.Author.When.Unix()
-					iterTime := iterObj.Author.When.Unix()
+					verObj, _ := repo.TagObject(verTag.Hash())
+					iterObj, _ := repo.TagObject(iterTag.Hash())
+					verTime := verObj.Tagger.When.Unix()
+					iterTime := iterObj.Tagger.When.Unix()
 
 					if verTime < iterTime {
 						u.UseLatest = false
@@ -88,7 +88,6 @@ func Label() {
 							u.UpdateLag = iterTime - verTime
 						}
 					}
-
 				}
 			}
 

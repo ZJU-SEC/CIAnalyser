@@ -33,9 +33,15 @@ func reportVersion(f *excelize.File) {
 	f.SetCellValue(sheet, "A1", "Version Count")
 	f.SetCellValue(sheet, "B1", "# of Repositories")
 
+	// config
 	iter := 2
 	THRESHOLD := 40
 	STEP := 5
+
+	// total number of checked CI script
+	var totalChecked int64
+	model.DB.Model(&script.Script{}).Where("checked = ?", true).Count(&totalChecked)
+
 	for bottom := 0; bottom <= THRESHOLD; bottom += STEP {
 		var c int64
 		up := bottom + STEP
@@ -45,13 +51,13 @@ func reportVersion(f *excelize.File) {
 				fmt.Sprintf(">= %d", bottom))
 			model.DB.Model(&script.Script{}).
 				Where("version_count >= ?", bottom).Count(&c)
-			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), c)
+			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalChecked))
 		} else {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
 				fmt.Sprintf("[%d, %d)", bottom, up))
 			model.DB.Model(&script.Script{}).
 				Where("version_count >= ? AND version_count < ?", bottom, up).Count(&c)
-			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), c)
+			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalChecked))
 		}
 
 		iter++
