@@ -34,10 +34,11 @@ func reportVersion(f *excelize.File) {
 	f.SetCellValue(sheet, "B1", "# of Repositories")
 
 	iter := 2
-	THRESHOLD := 100
-	for bottom := 0; bottom <= THRESHOLD; bottom += 10 {
+	THRESHOLD := 40
+	STEP := 5
+	for bottom := 0; bottom <= THRESHOLD; bottom += STEP {
 		var c int64
-		up := bottom + 10
+		up := bottom + STEP
 
 		if bottom == THRESHOLD {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
@@ -72,7 +73,7 @@ func reportCVE(f *excelize.File) {
 	f.NewSheet(sheet)
 	f.SetCellValue(sheet, "A1", "CVE")
 	f.SetCellValue(sheet, "B1", "Repository")
-	f.SetCellValue(sheet, "C1", "Script")
+	f.SetCellValue(sheet, "C1", "ScriptRef")
 	f.SetCellValue(sheet, "D1", "Usage")
 
 	iter := 0

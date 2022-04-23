@@ -13,8 +13,10 @@ func Label() {
 	rows, _ := model.DB.Model(&Script{}).Where("checked = ?", true).Rows()
 
 	// record scripts' tags & branches
+	repoMap := make(map[string]*git.Repository)
 	tagMap := make(map[string][]string)
 	branchMap := make(map[string][]string)
+	scriptMap := make(map[string]Script)
 
 	for rows.Next() {
 		var s Script
@@ -25,6 +27,8 @@ func Label() {
 			fmt.Println("[ERR] cannot open", s.SrcRef(), "as Git repository")
 			continue
 		}
+		repoMap[s.Ref] = repo
+		scriptMap[s.Ref] = s
 		// traverse tags & branches
 		branches, _ := repo.Branches()
 		tags, _ := repo.Tags()
@@ -39,23 +43,15 @@ func Label() {
 			t := strings.TrimPrefix(r.Name().String(), "refs/tags/")
 			tagMap[s.Ref] = append(tagMap[s.Ref], t)
 			s.VersionCount++
-			//co, err := repo.CommitObject(r.Hash())
-			//if err == nil {
-			//if uint(co.Author.When.Unix()) > s.ReleaseAt {
-			//	s.ReleaseAt = uint(co.Author.When.Unix())
-			//}
-			//}
+			co, err := repo.CommitObject(r.Hash())
+			if err == nil {
+				if co.Author.When.Unix() > s.LatestVersionTime {
+					s.LatestVersionTime = co.Author.When.Unix()
+				}
+			}
 			return nil
 		})
 
-		// find update_at
-		//cIter, _ := repo.CommitObjects()
-		//cIter.ForEach(func(c *object.Commit) error {
-		//if uint(c.Author.When.Unix()) > s.UpdateAt {
-		//	s.UpdateAt = uint(c.Author.When.Unix())
-		//}
-		//return nil
-		//})
 		model.DB.Save(&s)
 	}
 
@@ -65,25 +61,48 @@ func Label() {
 		var u Usage
 		model.DB.ScanRows(rows, &u)
 
-		changes := false
-		ref := u.SrcRef()
-
-		if branches, ok := branchMap[ref]; ok {
+		// check branch
+		if branches, ok := branchMap[u.ScriptRef()]; ok {
 			if slices.Contains(branches, u.Version()) {
 				u.UseBranch = true
-				changes = true
+				u.UpdateLag = 0
 			}
 		}
 
-		if tags, ok := tagMap[ref]; ok {
-			if tags[len(tags)-1] == u.Version() {
+		// check tag
+		if repo, ok := repoMap[u.ScriptRef()]; ok {
+
+			if verTag, err := repo.Tag(u.Version()); err == nil {
+				// is a tag
 				u.UseLatest = true
-				changes = true
+				for _, tag := range tagMap[u.ScriptRef()] {
+					iterTag, _ := repo.Tag(tag)
+					verObj, _ := repo.CommitObject(verTag.Hash())
+					iterObj, _ := repo.CommitObject(iterTag.Hash())
+					verTime := verObj.Author.When.Unix()
+					iterTime := iterObj.Author.When.Unix()
+
+					if verTime < iterTime {
+						u.UseLatest = false
+						if iterTime-verTime > u.UpdateLag {
+							u.UpdateLag = iterTime - verTime
+						}
+					}
+
+				}
+			}
+
+			if commObj, err := repo.CommitObject(plumbing.NewHash(u.Version())); err == nil {
+				// is a commit object
+				commTime := commObj.Author.When.Unix()
+				s := scriptMap[u.ScriptRef()]
+				if commTime >= s.LatestVersionTime {
+					u.UseLatest = true
+				} else {
+					u.UpdateLag = s.LatestVersionTime - commTime
+				}
 			}
 		}
-
-		if changes {
-			u.Update()
-		}
+		u.Update()
 	}
 }
