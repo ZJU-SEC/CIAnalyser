@@ -101,6 +101,7 @@ func Label() {
 				}
 			}
 		}
+		fmt.Println("DEBUG", u.UpdateLag)
 		u.Update()
 	}
 }
