@@ -36,7 +36,7 @@ func reportVersion(f *excelize.File) {
 	// config
 	iter := 2
 	THRESHOLD := 40
-	STEP := 5
+	STEP := 10
 
 	// total number of checked CI script
 	var totalChecked int64

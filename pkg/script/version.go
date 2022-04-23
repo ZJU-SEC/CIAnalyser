@@ -72,20 +72,22 @@ func Label() {
 			if verTag, err := repo.Tag(u.Version()); err == nil {
 				// is a tag
 				u.UseLatest = true
-				verObj, _ := repo.TagObject(verTag.Hash())
-				verTime := verObj.Tagger.When.Unix()
+				verObj, err := repo.TagObject(verTag.Hash())
+				if err == nil {
+					verTime := verObj.Tagger.When.Unix()
 
-				tagObjs, _ := repo.TagObjects() // get tag iterators
-				tagObjs.ForEach(func(tag *object.Tag) error {
-					iterTime := tag.Tagger.When.Unix()
-					if verTime < iterTime {
-						u.UseLatest = false
-						if -verTime > u.UpdateLag {
-							u.UpdateLag = iterTime - verTime
+					tagObjs, _ := repo.TagObjects() // get tag iterators
+					tagObjs.ForEach(func(tag *object.Tag) error {
+						iterTime := tag.Tagger.When.Unix()
+						if verTime < iterTime {
+							u.UseLatest = false
+							if -verTime > u.UpdateLag {
+								u.UpdateLag = iterTime - verTime
+							}
 						}
-					}
-					return nil
-				})
+						return nil
+					})
+				}
 			}
 
 			if commObj, err := repo.CommitObject(plumbing.NewHash(u.Version())); err == nil {
