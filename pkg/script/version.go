@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/exp/slices"
 	"strings"
 )
@@ -69,26 +68,18 @@ func Label() {
 
 		// check tag
 		if repo, ok := repoMap[u.ScriptRef()]; ok {
-			fmt.Println(u.Version())
 			if verTag, err := repo.Tag(u.Version()); err == nil {
 				// is a tag
-				fmt.Println("is a tag")
-				u.UseLatest = true
 				verObj, err := repo.TagObject(verTag.Hash())
 				if err == nil {
+					u.UpdateLag = 0
 					verTime := verObj.Tagger.When.Unix()
+					s := scriptMap[u.ScriptRef()]
 
-					tagObjs, _ := repo.TagObjects() // get tag iterators
-					tagObjs.ForEach(func(tag *object.Tag) error {
-						iterTime := tag.Tagger.When.Unix()
-						if verTime < iterTime {
-							u.UseLatest = false
-							if -verTime > u.UpdateLag {
-								u.UpdateLag = iterTime - verTime
-							}
-						}
-						return nil
-					})
+					if s.LatestVersionTime > verTime {
+						u.UseLatest = false
+						u.UpdateLag = s.LatestVersionTime - verTime
+					}
 				} else {
 					fmt.Println("not able to resolve tag")
 				}
