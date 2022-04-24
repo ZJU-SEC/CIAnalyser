@@ -58,6 +58,8 @@ func Label() {
 		var u Usage
 		model.DB.ScanRows(rows, &u)
 
+		u.UpdateLag = -1
+
 		// check branch
 		if branches, ok := branchMap[u.ScriptRef()]; ok {
 			if slices.Contains(branches, u.Version()) {
@@ -72,7 +74,6 @@ func Label() {
 				// is a tag
 				verObj, err := repo.TagObject(verTag.Hash())
 				if err == nil {
-					u.UpdateLag = 0
 					verTime := verObj.Tagger.When.Unix()
 					s := scriptMap[u.ScriptRef()]
 
@@ -91,7 +92,9 @@ func Label() {
 				s := scriptMap[u.ScriptRef()]
 				if commTime >= s.LatestVersionTime {
 					u.UseLatest = true
+					u.UpdateLag = 0
 				} else {
+					u.UseLatest = false
 					u.UpdateLag = s.LatestVersionTime - commTime
 				}
 			}
