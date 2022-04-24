@@ -97,7 +97,8 @@ type Usage struct {
 	Script    Script `gorm:"foreignKey:ScriptID"`
 	Use       string
 	UseBranch bool  `gorm:"default:false"`
-	UseLatest bool  `gorm:"default:false"`
+	UseTag    bool  `gorm:"default:false"`
+	UseHash   bool  `gorm:"default:false"`
 	UpdateLag int64 // record usage's update lag
 }
 

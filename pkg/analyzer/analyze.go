@@ -76,13 +76,36 @@ func reportCVE(f *excelize.File) {
 		"atlassian/gajira-create":                   "CVE-2020-14188",
 	}
 
-	f.NewSheet(sheet)
-	f.SetCellValue(sheet, "A1", "CVE")
-	f.SetCellValue(sheet, "B1", "Repository")
-	f.SetCellValue(sheet, "C1", "ScriptRef")
-	f.SetCellValue(sheet, "D1", "Usage")
+	var totalR int64
+	model.DB.Model(&model.Measure{}).Count(&totalR)
 
-	iter := 0
+	f.NewSheet(sheet)
+	f.SetCellValue(sheet, "A1", "CI Script")
+	f.SetCellValue(sheet, "B1", "% of Repositories")
+	f.SetCellValue(sheet, "C1", "# of Repositories")
+
+	iter := 2
+	for s := range CVEmapping {
+		var c int64
+		model.DB.Model(&script.Usage{}).
+			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+			Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+			Where("use ILIKE ?", s+"%").
+			Distinct("measure_id").
+			Count(&c)
+
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), s)
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalR))
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), c)
+		iter++
+	}
+
+	iter++
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), "CVE")
+	f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), "Repository")
+	f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), "ScriptRef")
+	f.SetCellValue(sheet, fmt.Sprintf("D%d", iter), "Usage")
+
 	for u, cve := range CVEmapping {
 		type Result struct {
 			Name string
@@ -111,11 +134,11 @@ func reportCVE(f *excelize.File) {
 			Scan(&result)
 
 		for _, r := range result {
+			iter++
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), cve)
 			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), r.Name)
 			f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), r.Ref)
 			f.SetCellValue(sheet, fmt.Sprintf("D%d", iter), r.Use)
-			iter++
 		}
 	}
 }
