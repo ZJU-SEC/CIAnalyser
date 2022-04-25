@@ -64,36 +64,49 @@ func Label() {
 		var u Usage
 		model.DB.ScanRows(rows, &u)
 
-		// check branch
+		change := false
+		u.UseTag = false
+		u.UseBranch = false
+		u.UseHash = false
+
+		// branch
 		if branches, ok := branchMap[u.ScriptRef()]; ok {
-			if slices.Contains(branches, u.Version()) {
+			if slices.Contains(branches, u.Version()) && !u.UseBranch {
 				u.UseBranch = true
+				change = true
 			}
 		}
 
+		// tag
 		if tags, ok := branchMap[u.ScriptRef()]; ok {
-			if slices.Contains(tags, u.Version()) {
+			if slices.Contains(tags, u.Version()) && !u.UseTag {
 				u.UseTag = true
+				change = true
 			}
 		}
 
-		// short / long hash
+		// short hash
 		if len(u.Version()) == 7 {
 			if hashes, ok := shortHashMap[u.ScriptRef()]; ok {
-				if slices.Contains(hashes, u.Version()) {
+				if slices.Contains(hashes, u.Version()) && !u.UseHash {
 					u.UseHash = true
+					change = true
 				}
 			}
 		}
 
+		// long hash
 		if len(u.Version()) == 40 {
 			if hashes, ok := longHashMap[u.ScriptRef()]; ok {
-				if slices.Contains(hashes, u.Version()) {
+				if slices.Contains(hashes, u.Version()) && !u.UseHash {
 					u.UseHash = true
+					change = true
 				}
 			}
 		}
 
-		model.DB.Save(&u)
+		if change {
+			model.DB.Save(&u)
+		}
 	}
 }
