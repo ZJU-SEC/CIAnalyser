@@ -29,7 +29,7 @@ func Label() {
 			continue
 		}
 		// traverse tags & branches
-		branches, _ := repo.Branches()
+		origin, _ := repo.Remote("origin")
 		tags, _ := repo.Tags()
 		commits, _ := repo.CommitObjects()
 
@@ -37,15 +37,17 @@ func Label() {
 			hash := c.Hash.String()
 			longHashMap[s.Ref] = append(longHashMap[s.Ref], hash)
 			shortHashMap[s.Ref] = append(shortHashMap[s.Ref], hash[0:6])
-
 			return nil
 		})
 
-		branches.ForEach(func(r *plumbing.Reference) error {
-			b := strings.TrimPrefix(r.Name().String(), "refs/heads/")
+		refList, _ := origin.List(&git.ListOptions{})
+		for _, ref := range refList {
+			if !strings.HasPrefix(ref.Name().String(), "refs/heads/") {
+				continue
+			}
+			b := strings.TrimPrefix(ref.Name().String(), "refs/heads/")
 			branchMap[s.Ref] = append(branchMap[s.Ref], b)
-			return nil
-		})
+		}
 
 		s.VersionCount = 0 // zero out count of version to persist idempotence
 		tags.ForEach(func(r *plumbing.Reference) error {
