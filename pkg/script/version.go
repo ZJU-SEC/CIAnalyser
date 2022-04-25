@@ -60,6 +60,8 @@ func Label() {
 		model.DB.Save(&s)
 	}
 
+	fmt.Println("[INFO] cache finished")
+
 	// traverse usage
 	rows, _ = model.DB.Model(&Usage{}).Rows()
 	for rows.Next() {

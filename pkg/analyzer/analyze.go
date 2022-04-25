@@ -20,6 +20,7 @@ func Analyze() {
 	reportCategory(f)
 	reportUsing(f)
 	reportVersion(f)
+	reportUpdateLag(f)
 	reportCVE(f)
 
 	if err := f.SaveAs(config.REPORT); err != nil {
@@ -27,9 +28,53 @@ func Analyze() {
 	}
 }
 
+func reportUpdateLag(f *excelize.File) {
+
+}
+
 func reportVersion(f *excelize.File) {
 	const sheet = "version"
 	f.NewSheet(sheet)
+
+	var c, totalR, totalChecked int64
+	f.SetCellValue(sheet, "A1", "Tag")
+	f.SetCellValue(sheet, "B1", "Branch")
+	f.SetCellValue(sheet, "C1", "Commit Hash")
+	f.SetCellValue(sheet, "D1", "Invalid")
+
+	model.DB.Model(&model.Measure{}).Count(&totalR)
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+		Where("use_tag = ?", true).Distinct("measure_id").
+		Count(&c)
+	f.SetCellValue(sheet, "A2", float64(c)/float64(totalR))
+
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+		Where("use_branch = ?", true).Distinct("measure_id").
+		Count(&c)
+	f.SetCellValue(sheet, "B2", float64(c)/float64(totalR))
+
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+		Where("use_hash = ?", true).Distinct("measure_id").
+		Count(&c)
+	f.SetCellValue(sheet, "C2", float64(c)/float64(totalR))
+
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+		Where("use_hash = ? AND use_tag = ? AND use_branch",
+			false, false, false).
+		Distinct("measure_id").
+		Count(&c)
+	f.SetCellValue(sheet, "D2", float64(c)/float64(totalR))
+	//-------------------------------
+	// start record the version count
+	//-------------------------------
 	f.SetCellValue(sheet, "A1", "Version Count")
 	f.SetCellValue(sheet, "B1", "# of Repositories")
 
@@ -39,11 +84,9 @@ func reportVersion(f *excelize.File) {
 	STEP := 10
 
 	// total number of checked CI script
-	var totalChecked int64
 	model.DB.Model(&script.Script{}).Where("checked = ?", true).Count(&totalChecked)
 
 	for bottom := 0; bottom <= THRESHOLD; bottom += STEP {
-		var c int64
 		up := bottom + STEP
 
 		if bottom == THRESHOLD {
