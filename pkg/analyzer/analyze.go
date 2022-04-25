@@ -75,11 +75,11 @@ func reportVersion(f *excelize.File) {
 	//-------------------------------
 	// start record the version count
 	//-------------------------------
-	f.SetCellValue(sheet, "A1", "Version Count")
-	f.SetCellValue(sheet, "B1", "# of Repositories")
+	f.SetCellValue(sheet, "A4", "Version Count")
+	f.SetCellValue(sheet, "B4", "# of Repositories")
 
 	// config
-	iter := 2
+	iter := 5
 	THRESHOLD := 40
 	STEP := 10
 
