@@ -78,7 +78,7 @@ func Label() {
 		}
 
 		// tag
-		if tags, ok := branchMap[u.ScriptRef()]; ok {
+		if tags, ok := tagMap[u.ScriptRef()]; ok {
 			if slices.Contains(tags, u.Version()) && !u.UseTag {
 				u.UseTag = true
 				change = true
