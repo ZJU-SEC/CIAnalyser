@@ -67,7 +67,7 @@ func reportVersion(f *excelize.File) {
 	model.DB.Model(&script.Usage{}).
 		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
 		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
-		Where("use_hash = ? AND use_tag = ? AND use_branch",
+		Where("use_hash = ? AND use_tag = ? AND use_branch = ?",
 			false, false, false).
 		Distinct("measure_id").
 		Count(&c)
