@@ -4,7 +4,7 @@ import (
 	"CIHunter/pkg/model"
 	"fmt"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 func Lag() {
@@ -21,15 +21,11 @@ func Lag() {
 		}
 
 		var latestVersionTime int64 = 0
-		tags, _ := repo.Tags()
-		tags.ForEach(func(r *plumbing.Reference) error {
-			to, err := repo.TagObject(r.Hash())
-			if err == nil {
-				if to.Tagger.When.Unix() > latestVersionTime {
-					latestVersionTime = to.Tagger.When.Unix()
-				}
-			} else {
-				fmt.Println("[ERR] cannot find tag object!")
+		tags, _ := repo.TagObjects()
+
+		tags.ForEach(func(t *object.Tag) error {
+			if t.Tagger.When.Unix() > latestVersionTime {
+				latestVersionTime = t.Tagger.When.Unix()
 			}
 			return nil
 		})
