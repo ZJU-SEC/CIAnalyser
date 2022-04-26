@@ -9,7 +9,7 @@ import (
 
 func Lag() {
 	// calculate latest version time
-	rows, _ := model.DB.Model(&Script{}).Rows()
+	rows, _ := model.DB.Model(&Script{}).Where("checked = ?", true).Rows()
 	for rows.Next() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
