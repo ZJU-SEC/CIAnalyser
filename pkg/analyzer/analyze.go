@@ -8,6 +8,7 @@ import (
 	"CIHunter/pkg/verified"
 	"fmt"
 	"github.com/xuri/excelize/v2"
+	"time"
 )
 
 func Analyze() {
@@ -29,7 +30,31 @@ func Analyze() {
 }
 
 func reportUpdateLag(f *excelize.File) {
+	const sheet = "lag"
+	f.NewSheet(sheet)
 
+	var c, totalR int64
+	model.DB.Model(&model.Measure{}).Count(&totalR)
+
+	f.SetCellValue(sheet, "A1", "Update Lag")
+	f.SetCellValue(sheet, "B1", "% of Repositories")
+	f.SetCellValue(sheet, "C1", "# of Repositories")
+
+	step := int64((time.Hour * 24 * 30).Seconds())
+	var bottom, up int64
+	for i := 0; int64(i)*step <= 100000000; i++ {
+		bottom = int64(i) * step
+		up = bottom + step
+		model.DB.Model(&script.Usage{}).
+			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+			Where("update_lag >= ? AND update_lag < ?", bottom, up).
+			Distinct("measure_id").Count(&c)
+
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
+			fmt.Sprintf("%dM~%dM", i, i+1))
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(c)/float64(totalR))
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2), c)
+	}
 }
 
 func reportVersion(f *excelize.File) {
@@ -110,6 +135,7 @@ func reportVersion(f *excelize.File) {
 func reportCVE(f *excelize.File) {
 	const sheet = "CVE"
 
+	// declare CVEs' mapping
 	CVEmapping := map[string]string{
 		"check-spelling/check-spelling":             "CVE-2021-32724",
 		"github/codeql-action":                      "CVE-2021-32638",
@@ -119,7 +145,7 @@ func reportCVE(f *excelize.File) {
 		"atlassian/gajira-create":                   "CVE-2020-14188",
 	}
 
-	var totalR int64
+	var c, totalR int64
 	model.DB.Model(&model.Measure{}).Count(&totalR)
 
 	f.NewSheet(sheet)
@@ -129,7 +155,6 @@ func reportCVE(f *excelize.File) {
 
 	iter := 2
 	for s := range CVEmapping {
-		var c int64
 		model.DB.Model(&script.Usage{}).
 			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
 			Joins("LEFT JOIN scripts s on usages.script_id = s.id").
@@ -143,7 +168,24 @@ func reportCVE(f *excelize.File) {
 		iter++
 	}
 
-	iter++
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Joins("LEFT JOIN scripts s on usages.script_id = s.id").
+		Where("use ILIKE ?", "check-spelling/check-spelling"+"%").
+		Or("use ILIKE ?", "check-spelling/check-spelling"+"%").
+		Or("use ILIKE ?", "github/codeql-action"+"%").
+		Or("use ILIKE ?", "hashicorp/vault-action"+"%").
+		Or("use ILIKE ?", "ericcornelissen/git-tag-annotation-action"+"%").
+		Or("use ILIKE ?", "atlassian/gajira-comment"+"%").
+		Or("use ILIKE ?", "atlassian/gajira-create"+"%").
+		Distinct("measure_id").
+		Count(&c)
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), "TOTAL")
+	f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalR))
+	f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), c)
+
+	// detailed CVE match
+	iter += 2
 	f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), "CVE")
 	f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), "Repository")
 	f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), "ScriptRef")

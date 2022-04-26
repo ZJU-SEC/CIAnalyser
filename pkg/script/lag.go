@@ -88,7 +88,7 @@ func Lag() {
 		}
 
 		if err == nil {
-			if t < s.LatestVersionTime {
+			if t != 0 && t < s.LatestVersionTime {
 				lag = s.LatestVersionTime - t
 			} else {
 				lag = 0
