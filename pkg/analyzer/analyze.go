@@ -76,7 +76,7 @@ func reportVersion(f *excelize.File) {
 	// start record the version count
 	//-------------------------------
 	f.SetCellValue(sheet, "A4", "Version Count")
-	f.SetCellValue(sheet, "B4", "# of Repositories")
+	f.SetCellValue(sheet, "B4", "% of CI Scripts")
 
 	// config
 	iter := 5

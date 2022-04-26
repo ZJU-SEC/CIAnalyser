@@ -43,6 +43,8 @@ func main() {
 		credential.Extract()
 	case "label-usage":
 		script.Label()
+	case "label-lag":
+		script.Lag()
 	case "parse-using":
 		script.ParseUsing()
 	case "analyze":
