@@ -203,9 +203,6 @@ func reportUsing(f *excelize.File) {
 	var NofDockerScript, NofNodeScript, NofRCScript, totalS,
 		NofDockerUsage, NofNodeUsage, NofRCUsage, totalR int64
 
-	model.DB.Model(&script.Script{}).
-		Where("\"using\" ILIKE ? OR \"using\" ILIKE ? OR \"using\" ILIKE ?",
-			"docker%", "node%", "composite").Count(&totalS)
 	model.DB.Model(&model.Measure{}).Count(&totalR)
 
 	model.DB.Model(&script.Script{}).
@@ -214,6 +211,7 @@ func reportUsing(f *excelize.File) {
 		Where("\"using\" ILIKE ?", "node%").Count(&NofNodeScript)
 	model.DB.Model(&script.Script{}).
 		Where("\"using\" ILIKE ?", "composite").Count(&NofRCScript)
+	totalS = NofDockerScript + NofNodeScript + NofRCScript
 
 	model.DB.Model(&script.Usage{}).
 		Joins("LEFT JOIN scripts ON scripts.id = usages.script_id").
