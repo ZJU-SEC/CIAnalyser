@@ -132,11 +132,13 @@ func reportVersion(f *excelize.File) {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
 				fmt.Sprintf(">= %d", bottom))
 			model.DB.Model(&script.Script{}).
+				Where("checked = ?", true).
 				Where("version_count >= ?", bottom).Count(&c)
 		} else {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
 				fmt.Sprintf("[%d, %d)", bottom, up))
 			model.DB.Model(&script.Script{}).
+				Where("checked = ?", true).
 				Where("version_count >= ? AND version_count < ?", bottom, up).Count(&c)
 		}
 
