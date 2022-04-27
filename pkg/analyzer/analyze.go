@@ -115,6 +115,7 @@ func reportVersion(f *excelize.File) {
 	//-------------------------------
 	f.SetCellValue(sheet, "A4", "Version Count")
 	f.SetCellValue(sheet, "B4", "% of CI Scripts")
+	f.SetCellValue(sheet, "C4", "# of CI Scripts")
 
 	// config
 	iter := 5
@@ -132,15 +133,15 @@ func reportVersion(f *excelize.File) {
 				fmt.Sprintf(">= %d", bottom))
 			model.DB.Model(&script.Script{}).
 				Where("version_count >= ?", bottom).Count(&c)
-			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalChecked))
 		} else {
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter),
 				fmt.Sprintf("[%d, %d)", bottom, up))
 			model.DB.Model(&script.Script{}).
 				Where("version_count >= ? AND version_count < ?", bottom, up).Count(&c)
-			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalChecked))
 		}
 
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), float64(c)/float64(totalChecked))
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", iter), c)
 		iter++
 	}
 }
