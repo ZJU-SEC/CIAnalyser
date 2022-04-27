@@ -80,11 +80,11 @@ func Lag() {
 		version := u.Version()
 
 		if u.UseBranch {
-			t, err = getTimeByBranch(repo, version)
+			t, err = GetTimeByBranch(repo, version)
 		} else if u.UseTag {
-			t, err = getTimeByTag(repo, version)
+			t, err = GetTimeByTag(repo, version)
 		} else if u.UseHash {
-			t, err = getTimeByHash(repo, version)
+			t, err = GetTimeByHash(repo, version)
 		}
 
 		if err == nil {
@@ -102,7 +102,7 @@ func Lag() {
 	}
 }
 
-func getTimeByBranch(r *git.Repository, v string) (int64, error) {
+func GetTimeByBranch(r *git.Repository, v string) (int64, error) {
 	hash, err := r.ResolveRevision(plumbing.Revision("remotes/origin/" + v))
 	if err != nil {
 		fmt.Println("[ERR] cannot resolve the branch", v, err)
@@ -112,7 +112,7 @@ func getTimeByBranch(r *git.Repository, v string) (int64, error) {
 	return commitObj.Author.When.Unix(), nil
 }
 
-func getTimeByHash(r *git.Repository, v string) (int64, error) {
+func GetTimeByHash(r *git.Repository, v string) (int64, error) {
 	commitObj, err := r.CommitObject(plumbing.NewHash(v))
 	if err != nil {
 		fmt.Println("[ERR] cannot resolve the commit", v, err)
@@ -121,7 +121,7 @@ func getTimeByHash(r *git.Repository, v string) (int64, error) {
 	return commitObj.Author.When.Unix(), nil
 }
 
-func getTimeByTag(r *git.Repository, v string) (int64, error) {
+func GetTimeByTag(r *git.Repository, v string) (int64, error) {
 	var err error
 	tag, err := r.Tag(v)
 	if err != nil {

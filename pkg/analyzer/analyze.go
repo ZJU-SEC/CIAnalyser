@@ -7,7 +7,10 @@ import (
 	"CIHunter/pkg/script"
 	"CIHunter/pkg/verified"
 	"fmt"
+	"github.com/go-git/go-git/v5"
 	"github.com/xuri/excelize/v2"
+	"path"
+	"strings"
 	"time"
 )
 
@@ -234,7 +237,17 @@ func reportCVE(f *excelize.File) {
 			Distinct().
 			Scan(&result)
 
+		repo, _ := git.PlainOpen(path.Join(config.SCRIPTS_PATH, "github/codeql-action"))
+		fixTime, _ := script.GetTimeByTag(repo, "codeql-bundle-20210304")
 		for _, r := range result {
+			reference := strings.Split(r.Use, "@")[1]
+			if len(reference) == 40 {
+				useTime, err := script.GetTimeByHash(repo, reference)
+				if err != nil || useTime >= fixTime {
+					continue
+				}
+			}
+
 			iter++
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", iter), cve)
 			f.SetCellValue(sheet, fmt.Sprintf("B%d", iter), r.Name)
