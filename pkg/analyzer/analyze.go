@@ -40,18 +40,31 @@ func reportUpdateLag(f *excelize.File) {
 	f.SetCellValue(sheet, "B1", "% of Repositories")
 	f.SetCellValue(sheet, "C1", "# of Repositories")
 
-	step := int64((time.Hour * 24 * 30).Seconds())
-	var bottom, up int64
-	for i := 0; int64(i)*step <= 100000000; i++ {
-		bottom = int64(i) * step
-		up = bottom + step
-		model.DB.Model(&script.Usage{}).
-			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
-			Where("update_lag >= ? AND update_lag < ?", bottom, up).
-			Distinct("measure_id").Count(&c)
+	points := []int64{0, 1, 3, 6, 12, 18, 24}
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
-			fmt.Sprintf("%dM~%dM", i, i+1))
+	step := int64((time.Hour * 24 * 30).Seconds())
+	for i := 0; i < len(points); i++ {
+		bottom := points[i] * step
+
+		if i+1 < len(points) {
+			up := points[i+1] * step
+			model.DB.Model(&script.Usage{}).
+				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+				Where("update_lag >= ? AND update_lag < ?", bottom, up).
+				Distinct("measure_id").Count(&c)
+
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
+				fmt.Sprintf("%dM~%dM", points[i], points[i+1]))
+		} else {
+			model.DB.Model(&script.Usage{}).
+				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+				Where("update_lag >= ?", bottom).
+				Distinct("measure_id").Count(&c)
+
+			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
+				fmt.Sprintf(">=%dM", points[i]))
+		}
+
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(c)/float64(totalR))
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2), c)
 	}
