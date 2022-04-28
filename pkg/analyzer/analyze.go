@@ -40,8 +40,8 @@ func reportUpdateLag(f *excelize.File) {
 	model.DB.Model(&model.Measure{}).Count(&totalR)
 
 	f.SetCellValue(sheet, "A1", "Update Lag")
-	f.SetCellValue(sheet, "B1", "% of Repositories")
-	f.SetCellValue(sheet, "C1", "# of Repositories")
+	f.SetCellValue(sheet, "B1", "% of Usage")
+	f.SetCellValue(sheet, "C1", "# of Usage")
 
 	points := []int64{0, 1, 3, 6, 12, 18, 24}
 
@@ -52,17 +52,13 @@ func reportUpdateLag(f *excelize.File) {
 		if i+1 < len(points) {
 			up := points[i+1] * step
 			model.DB.Model(&script.Usage{}).
-				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
-				Where("update_lag >= ? AND update_lag < ?", bottom, up).
-				Distinct("measure_id").Count(&c)
+				Where("update_lag >= ? AND update_lag < ?", bottom, up).Count(&c)
 
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
 				fmt.Sprintf("%dM~%dM", points[i], points[i+1]))
 		} else {
 			model.DB.Model(&script.Usage{}).
-				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
-				Where("update_lag >= ?", bottom).
-				Distinct("measure_id").Count(&c)
+				Where("update_lag >= ?", bottom).Count(&c)
 
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
 				fmt.Sprintf(">=%dM", points[i]))
