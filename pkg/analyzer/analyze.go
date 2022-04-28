@@ -36,8 +36,8 @@ func reportUpdateLag(f *excelize.File) {
 	const sheet = "lag"
 	f.NewSheet(sheet)
 
-	var c, totalR int64
-	model.DB.Model(&model.Measure{}).Count(&totalR)
+	var c, totalU int64
+	model.DB.Model(&script.Usage{}).Where("update_lag > ?", -1).Count(&totalU)
 
 	f.SetCellValue(sheet, "A1", "Update Lag")
 	f.SetCellValue(sheet, "B1", "% of Usage")
@@ -64,7 +64,7 @@ func reportUpdateLag(f *excelize.File) {
 				fmt.Sprintf(">=%dM", points[i]))
 		}
 
-		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(c)/float64(totalR))
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(c)/float64(totalU))
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2), c)
 	}
 }
