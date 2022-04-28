@@ -36,12 +36,18 @@ func reportUpdateLag(f *excelize.File) {
 	const sheet = "lag"
 	f.NewSheet(sheet)
 
-	var c, totalU int64
+	var cU, cR, totalU, totalR int64
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Where("update_lag >= ?", 0).Distinct("measure_id").
+		Count(&totalR)
 	model.DB.Model(&script.Usage{}).Where("update_lag > ?", -1).Count(&totalU)
 
 	f.SetCellValue(sheet, "A1", "Update Lag")
 	f.SetCellValue(sheet, "B1", "% of Usage")
 	f.SetCellValue(sheet, "C1", "# of Usage")
+	f.SetCellValue(sheet, "D1", "% of Repo")
+	f.SetCellValue(sheet, "E1", "# of Repo")
 
 	points := []int64{0, 1, 3, 6, 12, 18, 24}
 
@@ -52,20 +58,39 @@ func reportUpdateLag(f *excelize.File) {
 		if i+1 < len(points) {
 			up := points[i+1] * step
 			model.DB.Model(&script.Usage{}).
-				Where("update_lag >= ? AND update_lag < ?", bottom, up).Count(&c)
+				Where("update_lag >= ? AND update_lag < ?", bottom, up).Count(&cU)
+
+			err := model.DB.Model(&script.Usage{}).
+				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+				Having("MAX(update_lag) >= ? AND MAX(update_lag) < ?", bottom, up).
+				Group("measure_id").Distinct().Count(&cR).Error
+
+			if err != nil {
+				fmt.Println("DEBUG", err)
+			}
 
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
 				fmt.Sprintf("%dM~%dM", points[i], points[i+1]))
 		} else {
 			model.DB.Model(&script.Usage{}).
-				Where("update_lag >= ?", bottom).Count(&c)
+				Where("update_lag >= ?", bottom).Count(&cU)
 
+			err := model.DB.Model(&script.Usage{}).
+				Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+				Having("MAX(update_lag) >= ?", bottom).
+				Group("measure_id").Distinct().Count(&cR).Error
+
+			if err != nil {
+				fmt.Println("DEBUG", err)
+			}
 			f.SetCellValue(sheet, fmt.Sprintf("A%d", i+2),
 				fmt.Sprintf(">=%dM", points[i]))
 		}
 
-		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(c)/float64(totalU))
-		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2), c)
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+2), float64(cU)/float64(totalU))
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+2), cU)
+		f.SetCellValue(sheet, fmt.Sprintf("D%d", i+2), float64(cR)/float64(totalR))
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", i+2), cR)
 	}
 }
 
