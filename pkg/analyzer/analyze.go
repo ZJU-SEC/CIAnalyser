@@ -92,6 +92,27 @@ func reportUpdateLag(f *excelize.File) {
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", i+2), float64(cR)/float64(totalR))
 		f.SetCellValue(sheet, fmt.Sprintf("E%d", i+2), cR)
 	}
+
+	var avg float64
+	row := model.DB.Model(&script.Usage{}).Where("update_lag >= ?", 0).
+		Select("AVG(update_lag)").Row()
+	row.Scan(&avg)
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", len(points)+4), "AverageLag")
+	f.SetCellValue(sheet, fmt.Sprintf("B%d", len(points)+4), avg)
+
+	var oldUsage int64
+	model.DB.Model(&script.Usage{}).Where("update_lag = ?", 0).Count(&oldUsage)
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", len(points)+5), "Old Usage")
+	f.SetCellValue(sheet, fmt.Sprintf("B%d", len(points)+5),
+		1-float64(oldUsage)/float64(totalU))
+
+	var oldRepo int64
+	model.DB.Model(&script.Usage{}).
+		Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+		Where("update_lag > ?", 0).Distinct("measure_id").
+		Count(&oldRepo)
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", len(points)+6), "Old Repo")
+	f.SetCellValue(sheet, fmt.Sprintf("B%d", len(points)+6), float64(oldRepo)/float64(totalR))
 }
 
 func reportVersion(f *excelize.File) {
@@ -398,7 +419,6 @@ func reportVerified(f *excelize.File) {
 			voRepo, float64(voRepo*100)/float64(tRepo)))
 }
 
-// TODO
 func reportContributor(f *excelize.File) {
 	const sheet = "contributor"
 	f.NewSheet(sheet)
