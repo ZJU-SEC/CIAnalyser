@@ -492,8 +492,7 @@ func reportCredential(f *excelize.File) {
 		}
 
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", i+1), c)
-		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+1),
-			fmt.Sprintf("%.2f%%", float64(c)/float64(totalR)*100))
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i+1), float64(c)/float64(totalR))
 	}
 
 	var m int64
