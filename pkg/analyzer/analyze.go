@@ -25,10 +25,49 @@ func Analyze() {
 	reportUsing(f)
 	reportVersion(f)
 	reportUpdateLag(f)
+	reportScript(f)
 	reportCVE(f)
 
 	if err := f.SaveAs(config.REPORT); err != nil {
 		fmt.Println("[ERR] cannot save report to", config.REPORT)
+	}
+}
+
+func reportScript(f *excelize.File) {
+	const sheet = "script"
+	f.NewSheet(sheet)
+
+	scripts := []string{
+		"actions/checkout",
+		"actions/cache",
+		"actions/setup-node",
+		"actions/upload-artifact",
+		"actions/setup-python",
+		"actions/download-artifact",
+		"actions/setup-java",
+		"actions/setup-go",
+		"codecov/codecov-action",
+		"actions/upload-release-asset",
+	}
+
+	f.SetCellValue(sheet, "A1", "Script")
+	f.SetCellValue(sheet, "B1", "# of Repo")
+	f.SetCellValue(sheet, "C1", "% of Repo")
+
+	i := 2
+	var c, totalR int64
+	model.DB.Model(&model.Measure{}).Count(&totalR)
+
+	for _, s := range scripts {
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", i), s)
+
+		model.DB.Model(&script.Usage{}).
+			Joins("LEFT JOIN measures m on m.id = usages.measure_id").
+			Where("use ILIKE ?", s+"%").Distinct("measure_id").Count(&c)
+
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", i), c)
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", i), float64(c)/float64(totalR))
+		i++
 	}
 }
 
@@ -100,11 +139,11 @@ func reportUpdateLag(f *excelize.File) {
 	f.SetCellValue(sheet, fmt.Sprintf("A%d", len(points)+4), "AverageLag")
 	f.SetCellValue(sheet, fmt.Sprintf("B%d", len(points)+4), avg)
 
-	var oldUsage int64
-	model.DB.Model(&script.Usage{}).Where("update_lag = ?", 0).Count(&oldUsage)
+	var newUsage int64
+	model.DB.Model(&script.Usage{}).Where("update_lag = ?", 0).Count(&newUsage)
 	f.SetCellValue(sheet, fmt.Sprintf("A%d", len(points)+5), "Old Usage")
 	f.SetCellValue(sheet, fmt.Sprintf("B%d", len(points)+5),
-		1-float64(oldUsage)/float64(totalU))
+		1-float64(newUsage)/float64(totalU))
 
 	var oldRepo int64
 	model.DB.Model(&script.Usage{}).
