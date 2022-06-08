@@ -1,0 +1,16 @@
+package main
+
+import "os"
+
+func main() {
+	move := os.Args[1]
+	switch move {
+	case "--official-actions":
+		get_official_all()
+	case "--official-repos":
+		get_official_repos()
+	case "--dependents":
+		get_dependents_repos_all()
+	}
+	// get_dependents("https://github.com/github/codeql-action/network/dependents", nil)
+}
