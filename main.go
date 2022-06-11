@@ -7,6 +7,7 @@ import (
 	"CIHunter/pkg/credential"
 	"CIHunter/pkg/model"
 	"CIHunter/pkg/repo"
+	"CIHunter/pkg/router"
 	"CIHunter/pkg/script"
 	"CIHunter/pkg/verified"
 	"fmt"
@@ -49,6 +50,14 @@ func main() {
 		script.ParseUsing()
 	case "analyze":
 		analyzer.Analyze()
+	case "official-actions":
+		router.GetOfficialActionsAll()
+	case "official-repos":
+		router.GetOfficialReposAll()
+	case "dependents":
+		router.GetDependentsReposAll()
+	case "recover":
+		router.RecoverCrawlAll()
 	default:
 		fmt.Println("not a valid stage code")
 	}
