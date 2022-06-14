@@ -84,6 +84,7 @@ func get_official_with_kerword(keyword string, db *gorm.DB) {
 		fmt.Println(err)
 	})
 	c.Visit("https://github.com/marketplace?type=actions&query=" + keyword)
+	random_delay_ms(1000)
 
 	if number_of_result > 0 {
 
@@ -93,6 +94,7 @@ func get_official_with_kerword(keyword string, db *gorm.DB) {
 			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(number_of_result) + " results, collecting")
 			for i := 2; i <= number_of_pages; i++ {
 				c.Visit("https://github.com/marketplace?type=actions&query=" + keyword + "&page=" + strconv.Itoa(i))
+				random_delay_ms(1000)
 			}
 			db.Clauses(clause.OnConflict{DoNothing: true}).Create(to_visit)
 		} else {
@@ -206,6 +208,7 @@ func GetDependentsReposAll() {
 		//   .Update("checked", true)
 		get_dependents("https://github.com/"+record.Ref+"/network/dependents", db, record.Ref)
 		db.Model(&script.Script{}).Where("identifier = ?", record.Ref).Update("checked", true)
+		random_delay_ms(1000)
 	}
 }
 
@@ -246,7 +249,7 @@ func get_dependents(url string, db *gorm.DB, repo_id string) {
 }
 
 func get_package_dependents(url string, package_name string, db *gorm.DB, repo_id string) {
-	next_page := ""
+	// next_page := ""
 	c := colly.NewCollector()
 	to_insert := make([]DependRelation, 0)
 	finished := false
@@ -257,13 +260,13 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 	c.OnHTML("a", func(e *colly.HTMLElement) {
 		if strings.Contains(e.Text, "Next") && e.Attr("rel") == "nofollow" {
 			if strings.Contains(e.Attr("href"), "/network/dependents") {
-				// if DEBUG {
-				// 	fmt.Println("visiting dependents subpage: " + e.Attr("href"))
-				// }
-				// random_delay_ms(500)
-				// last_visited = e.Attr("href")
-				// c.Visit(e.Attr("href"))
-				next_page = e.Attr("href")
+				if DEBUG {
+					fmt.Println("visiting dependents subpage: " + e.Attr("href"))
+				}
+				random_delay_ms(500)
+				last_visited = e.Attr("href")
+				c.Visit(e.Attr("href"))
+				// next_page = e.Attr("href")
 			}
 		} else if e.Attr("data-hovercard-type") == "repository" && e.Attr("class") == "text-bold" {
 			to_insert = append(to_insert, DependRelation{
@@ -336,13 +339,16 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 	if !finished {
 		if DEBUG {
 			// fmt.Println("crawl " + repo_id + " failed while accessing " + last_visited)
-			fmt.Println("update last_visited to " + last_visited)
+			// if next_page == "" {
+			fmt.Println("crawl " + repo_id + " failed while accessing " + last_visited)
+			// }
+			// fmt.Println("update last_visited to " + last_visited)
 		}
 		old_checked := make([]CheckedPackage, 0)
 		db.Where("repo_identifier = ", repo_id).Find(&old_checked)
 		old_count := 0
 		if len(old_checked) > 0 {
-			if last_visited == old_checked[0].LastVisitedUrl {
+			if last_visited == old_checked[0].LastVisitedUrl && strings.HasSuffix(last_visited, "/network/dependents") {
 				old_count = int(old_checked[0].FailedTimes)
 			}
 		}
@@ -370,22 +376,28 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 		db.Clauses(clause.OnConflict{DoNothing: true}).CreateInBatches(&to_insert, 100)
 	}
 
-	if next_page != "" {
-		get_package_dependents(next_page, package_name, db, repo_id)
-	}
+	// if next_page != "" {
+	// 	random_delay_ms(700)
+	// 	get_package_dependents(next_page, package_name, db, repo_id)
+	// }
 }
 
 func RecoverCrawlAll() bool {
 
 	db := model.DB
 	to_visit := make([]CheckedPackage, 0)
-	db.Where("finished = ?", false).Where("fail_time < ", 3).Find(&to_visit)
+	db.Where("finished = ? AND failed_times < ?", false, 5).Find(&to_visit)
 
 	for _, pack := range to_visit {
 		if DEBUG {
 			fmt.Println("recovering " + pack.RepoIdentifier + ": " + pack.PackageIdentifier + " from " + pack.LastVisitedUrl)
 		}
+		// this means the packages may not be get properly
+		// if strings.HasSuffix(pack.LastVisitedUrl, "/network/dependents") {
+		// 	get_dependents(pack.LastVisitedUrl, db, pack.RepoIdentifier)
+		// } else {
 		get_package_dependents(pack.LastVisitedUrl, pack.PackageIdentifier, db, pack.RepoIdentifier)
+		// }
 		random_delay_ms(1000)
 	}
 	if len(to_visit) > 0 {

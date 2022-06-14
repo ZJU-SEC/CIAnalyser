@@ -57,7 +57,9 @@ func main() {
 	case "dependents":
 		router.GetDependentsReposAll()
 	case "recover":
-		router.RecoverCrawlAll()
+		for router.RecoverCrawlAll() {
+			// do nothing
+		}
 	default:
 		fmt.Println("not a valid stage code")
 	}
