@@ -19,3 +19,4 @@ CIHunter
 .idea/
 config.ini
 *.xlsx
+nohup.out
