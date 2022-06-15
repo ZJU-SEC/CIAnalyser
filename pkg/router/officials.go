@@ -149,9 +149,8 @@ func GetOfficialReposAll() {
 			// })
 			db.Clauses(clause.OnConflict{DoNothing: true}).Create(
 				&script.Script{
-					Ref:        identifier,
-					Maintainer: identifier_to_maintainer(identifier),
-					Verified:   true,
+					Ref:      identifier,
+					Verified: true,
 				},
 			)
 			fmt.Println("with login: " + identifier)
@@ -166,9 +165,8 @@ func GetOfficialReposAll() {
 			// })
 			db.Clauses(clause.OnConflict{DoNothing: true}).Create(
 				&script.Script{
-					Ref:        identifier,
-					Maintainer: identifier_to_maintainer(identifier),
-					Verified:   true,
+					Ref:      identifier,
+					Verified: true,
 				},
 			)
 			fmt.Println("direct link: " + identifier)
