@@ -15,15 +15,15 @@ import (
 // Script schema for script's metadata
 type Script struct {
 	// basic
-	ID  uint   `gorm:"primaryKey;autoIncrement;"`
-	Url string `gorm:"uniqueIndex"`
+	ID  uint `gorm:"primaryKey;autoIncrement;"`
+	Url string
 
 	// crawl
 	Ref           string
 	Category      string
 	OnMarketplace bool `gorm:"default:false"`
 	Verified      bool `gorm:"default:false"`
-	StarCount     int  `gorm:"default:0"`
+	StarCount     string
 
 	// clone
 	Cloned            bool `gorm:"default:false"`
@@ -32,15 +32,14 @@ type Script struct {
 	LatestVersionTime int64 `gorm:"default:0"` // time for the latest version
 }
 
-func (s *Script) fetchOrCreate() {
+func (s *Script) Create() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(s)
-	if res.Error != nil { // create failed
-		fmt.Println("[ERR] cannot create script", s.Ref, res.Error)
-	} else if res.RowsAffected == 0 { // create nothing, fetch
-		model.DB.Where(Script{Ref: s.Ref}).First(s)
+	res := model.DB.Model(&Script{}).
+		Where(Script{Ref: s.Ref, Url: s.Url})
+	if res.RowsAffected == 0 {
+		model.DB.Create(s)
 	}
 
 	mutex.Unlock()

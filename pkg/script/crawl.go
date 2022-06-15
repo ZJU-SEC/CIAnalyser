@@ -28,7 +28,7 @@ func Crawl() {
 	for rows.Next() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
-		getScriptSource(&s)
+		getScriptDetail(&s)
 		model.DB.Save(&s)
 	}
 }
@@ -38,26 +38,11 @@ func getScriptsWithKeyword(keyword string) {
 	c := colly.NewCollector()
 
 	toVisit := make([]Script, 0)
-	c.OnHTML("a", func(e *colly.HTMLElement) {
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		if strings.HasPrefix(e.Attr("href"), "/marketplace/actions/") {
-			attrs := make([]string, 0)
-			for _, attr := range strings.Split(e.Text, "\n") {
-				if len(strings.Trim(attr, " \t")) > 0 {
-					attrs = append(attrs, strings.Trim(attr, " \t"))
-				}
-			}
-
-			starCount := 0
-			if len(attrs) > 4 {
-				if len(attrs[4]) > 6 {
-					starCount, _ = strconv.Atoi(attrs[4][0 : len(attrs[4])-6])
-				} else {
-					fmt.Printf("%s is not a valid count", attrs[4])
-				}
-			}
-
+			starStr := e.ChildText("span.text-small.color-fg-muted.text-bold")
 			toVisit = append(toVisit, Script{
-				StarCount:     starCount,
+				StarCount:     strings.Split(starStr, " ")[0],
 				OnMarketplace: true,
 				Url:           "https://github.com" + e.Attr("href"),
 			})
@@ -97,6 +82,7 @@ func getScriptsWithKeyword(keyword string) {
 			for i := 2; i <= pageNum; i++ {
 				c.Visit("https://github.com/marketplace?type=actions&query=" + keyword + "&page=" + strconv.Itoa(i))
 			}
+
 			model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&toVisit)
 		} else {
 			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, splitting ...")
@@ -108,32 +94,36 @@ func getScriptsWithKeyword(keyword string) {
 }
 
 // this function get official scripts' repositories by entering the link in marketplace page
-func getScriptSource(s *Script) {
-	get_repo := false
+func getScriptDetail(s *Script) {
+	getDetail := false
 
 	c := colly.NewCollector()
 	c.OnHTML("aside", func(e *colly.HTMLElement) {
-		direct_link := ""
+		directLink := ""
 
 		for _, link := range e.ChildAttrs("a", "href") {
 			if config.DEBUG {
 				fmt.Println("***" + link + "***")
 			}
 			if isDirectRepoLink(link) {
-				direct_link = link
+				directLink = link
 				break
 			}
 		}
 
-		if direct_link != "" {
-			get_repo = true
-			identifier := direct_link[19:]
-			s.Ref = identifier
-			s.Verified = IsVerified(strings.Split(s.Ref, "/")[0])
-		}
+		getDetail = true
+		identifier := directLink[19:]
+		s.Ref = identifier
+		s.Verified = IsVerified(strings.Split(s.Ref, "/")[0])
 	})
+
+	c.OnHTML("a.topic-tag.topic-tag-link.f6", func(e *colly.HTMLElement) {
+		getDetail = true
+		s.Category = s.Category + strings.TrimSpace(e.Text) + ";"
+	})
+
 	c.Visit(s.Url)
-	if config.DEBUG && !get_repo {
+	if config.DEBUG && !getDetail {
 		fmt.Printf("didn't get repo at %s\n", s.Url)
 	}
 }

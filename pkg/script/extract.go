@@ -55,15 +55,6 @@ func analyzeUses(job *model.Job, measure *model.Measure) {
 		script.OnMarketplace = false
 		script.Ref = strings.Split(step.Uses, "@")[0]
 		script.Verified = IsVerified(strings.Split(script.Ref, "/")[0])
-		script.fetchOrCreate()
-
-		usage := Usage{
-			MeasureID: measure.ID,
-			Measure:   *measure,
-			ScriptID:  script.ID,
-			Script:    script,
-			Use:       step.Uses,
-		}
-		usage.create()
+		script.Create()
 	}
 }
