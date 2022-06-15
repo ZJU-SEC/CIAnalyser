@@ -4,22 +4,30 @@ import (
 	"CIHunter/config"
 	"CIHunter/pkg/model"
 	"fmt"
-	"gorm.io/gorm/clause"
+	"golang.org/x/exp/slices"
 	"path"
 	"strings"
 	"sync"
+
+	"gorm.io/gorm/clause"
 )
 
 // Script schema for script's metadata
 type Script struct {
-	ID                uint   `gorm:"primaryKey;autoIncrement;"`
-	Ref               string `gorm:"uniqueIndex"`
-	Maintainer        string
-	Verified          bool `gorm:"default:false"`
-	Checked           bool `gorm:"default:false"`
+	// basic
+	ID  uint   `gorm:"primaryKey;autoIncrement;"`
+	Url string `gorm:"uniqueIndex"`
+
+	// crawl
+	Ref           string `gorm:"uniqueIndex;"`
+	Category      string
+	OnMarketplace bool `gorm:"default:false"`
+	Verified      bool `gorm:"default:false"`
+	StarCount     int  `gorm:"default:0"`
+
+	// clone
+	Cloned            bool `gorm:"default:false"`
 	Using             string
-	IsDeployment      bool  `gorm:"default:false"`
-	IsRelease         bool  `gorm:"default:false"`
 	VersionCount      int   `gorm:"default:0"`
 	LatestVersionTime int64 `gorm:"default:0"` // time for the latest version
 }
@@ -130,4 +138,30 @@ func (u *Usage) ScriptRef() string {
 
 func (u *Usage) Version() string {
 	return strings.Split(u.Use, "@")[1]
+}
+
+type Verified struct {
+	ID   uint   `gorm:"primaryKey;autoIncrement"`
+	Name string `gorm:"uniqueIndex"`
+}
+
+func (v *Verified) Create() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(v)
+
+	mutex.Unlock()
+}
+
+var verified []string = nil
+
+func IsVerified(name string) bool {
+	if verified == nil {
+		model.DB.Model(&Verified{}).Select("name").Find(&verified)
+		slices.Sort(verified)
+	}
+
+	_, exist := slices.BinarySearch(verified, name)
+	return exist
 }

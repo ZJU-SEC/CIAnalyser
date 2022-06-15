@@ -9,7 +9,6 @@ import (
 	"CIHunter/pkg/repo"
 	"CIHunter/pkg/router"
 	"CIHunter/pkg/script"
-	"CIHunter/pkg/verified"
 	"fmt"
 	"os"
 )
@@ -26,20 +25,18 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "index-repo":
-		repo.Index()
-	case "clone-repo":
-		repo.Clone()
+	case "crawl-script":
+		script.Crawl()
 	case "extract-script":
 		script.Extract()
 	case "clone-script":
 		script.Clone()
-	case "categorize-script":
-		script.Categorize()
+	//case "dependent":
+	//	repo.GetDependentsReposAll()
+	case "clone-repo":
+		repo.Clone()
 	case "crawl-contributor":
 		contributor.Crawl()
-	case "crawl-verified":
-		verified.Crawl()
 	case "extract-credential":
 		credential.Extract()
 	case "label-usage":
@@ -50,12 +47,6 @@ func main() {
 		script.ParseUsing()
 	case "analyze":
 		analyzer.Analyze()
-	case "official-actions":
-		router.GetOfficialActionsAll()
-	case "official-repos":
-		router.GetOfficialReposAll()
-	case "dependents":
-		router.GetDependentsReposAll()
 	case "recover":
 		router.RecoverCrawlAll()
 	default:
