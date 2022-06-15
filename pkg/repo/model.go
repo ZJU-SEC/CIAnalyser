@@ -1,8 +1,9 @@
 package repo
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
 	"fmt"
 	"gorm.io/gorm"
 	"path"
@@ -11,9 +12,16 @@ import (
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID      uint   `gorm:"primaryKey;autoIncrement"`
-	Ref     string `gorm:"uniqueIndex"`
-	Checked bool   `gorm:"default:false"`
+	ID     uint   `gorm:"primaryKey;autoIncrement"`
+	Ref    string `gorm:"uniqueIndex"`
+	Cloned bool   `gorm:"default:false"`
+}
+
+type RepoScriptRelation struct {
+	RepoID   uint
+	Repo     Repo `gorm:"foreignKey:RepoID"`
+	ScriptID uint
+	Script   script.Script `gorm:"foreignKey:ScriptID"`
 }
 
 // CreateRepo a repo

@@ -22,7 +22,7 @@ $ docker run \
   --restart unless-stopped \
   -e POSTGRES_USER=ZJU-SEC \
   -e POSTGRES_PASSWORD=<YOUR DB PASSWORD> \
-  -e POSTGRES_DB=CIHunter \
+  -e POSTGRES_DB=CIAnalyser \
   -p 5432:5432 postgres
 ```
 
@@ -30,12 +30,12 @@ $ docker run \
 ## :hammer_and_wrench: Build
 
 ```bash
-$ go build CIHunter
+$ go build CIAnalyser
 ```
 
 ## :rocket: Run
 
 
 ```bash
-$ ./CIHunter
+$ ./CIAnalyser
 ```

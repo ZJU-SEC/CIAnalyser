@@ -1,8 +1,8 @@
 package script
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"

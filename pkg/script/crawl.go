@@ -1,9 +1,9 @@
 package script
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"fmt"
 	"strconv"
 	"strings"

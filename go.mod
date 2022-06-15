@@ -1,4 +1,4 @@
-module CIHunter
+module CIAnalyser
 
 go 1.18
 

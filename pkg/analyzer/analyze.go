@@ -1,10 +1,10 @@
 package analyzer
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/credential"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/script"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/credential"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/xuri/excelize/v2"

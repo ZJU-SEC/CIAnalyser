@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"CIHunter/config"
+	"CIAnalyser/config"
 	"fmt"
 	"math/rand"
 	"os"

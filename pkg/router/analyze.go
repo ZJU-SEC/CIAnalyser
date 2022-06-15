@@ -7,7 +7,7 @@ import (
 
 	"github.com/gocolly/colly"
 	// "gorm.io/driver/sqlite"
-	"CIHunter/pkg/model"
+	"CIAnalyser/pkg/model"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

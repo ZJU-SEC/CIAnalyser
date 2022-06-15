@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/script"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
 
 	"github.com/gocolly/colly"
 	// "gorm.io/driver/sqlite"
