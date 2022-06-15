@@ -57,19 +57,16 @@ func getScriptsWithKeyword(keyword string) {
 			}
 
 			toVisit = append(toVisit, Script{
-				Category:      attrs[0],
 				StarCount:     starCount,
 				OnMarketplace: true,
 				Url:           "https://github.com" + e.Attr("href"),
 			})
 		}
 	})
-	c.OnHTML("span", func(e *colly.HTMLElement) {
-		text := e.Text
-		if strings.HasSuffix(text, "results") && len(text) < 15 {
-			resultStr := text[0 : len(text)-8]
-			resultNum, _ = strconv.Atoi(resultStr)
-		}
+
+	// parse number of results
+	c.OnHTML("span[class=text-bold]", func(e *colly.HTMLElement) {
+		resultNum, _ = strconv.Atoi(strings.Split(e.Text, " ")[0])
 	})
 
 	c.OnHTML("p.color-fg-muted.text-small.lh-condensed.mb-1", func(e *colly.HTMLElement) {
@@ -96,13 +93,13 @@ func getScriptsWithKeyword(keyword string) {
 		pageNum := (resultNum-1)/20 + 1
 
 		if resultNum <= 1000 {
-			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, collecting")
+			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, collecting ...")
 			for i := 2; i <= pageNum; i++ {
 				c.Visit("https://github.com/marketplace?type=actions&query=" + keyword + "&page=" + strconv.Itoa(i))
 			}
-			model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(toVisit)
+			model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&toVisit)
 		} else {
-			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, refining")
+			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, splitting ...")
 			for _, char := range utils.ALLCHARS {
 				getScriptsWithKeyword(keyword + string(char))
 			}

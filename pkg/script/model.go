@@ -19,7 +19,7 @@ type Script struct {
 	Url string `gorm:"uniqueIndex"`
 
 	// crawl
-	Ref           string `gorm:"uniqueIndex;"`
+	Ref           string
 	Category      string
 	OnMarketplace bool `gorm:"default:false"`
 	Verified      bool `gorm:"default:false"`

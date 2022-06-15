@@ -1,4 +1,4 @@
-# :robot: CIHunter
+# :robot: CIAnalyser
 
 [![Build](https://github.com/ZJU-SEC/CIHunter/actions/workflows/build.yml/badge.svg)](https://github.com/ZJU-SEC/CIHunter/actions/workflows/build.yml)
 
