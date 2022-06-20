@@ -51,6 +51,8 @@ func main() {
 		for router.RecoverCrawlAll() {
 			// do nothing
 		}
+	case "migrate":
+		router.RelationsToRepos()
 	default:
 		fmt.Println("not a valid stage code")
 	}

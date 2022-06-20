@@ -5,15 +5,16 @@ import (
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/utils"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/otiai10/copy"
-	"github.com/shomali11/parallelizer"
 	"math/rand"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/otiai10/copy"
+	"github.com/shomali11/parallelizer"
 )
 
 func Clone() {
@@ -26,7 +27,7 @@ func Clone() {
 	defer group.Close()
 
 	// get database iterator
-	rows, err := model.DB.Model(&Repo{}).Where("checked = ?", false).Rows()
+	rows, err := model.DB.Model(&Repo{}).Where("cloned = ?", false).Rows()
 	if err != nil {
 		panic(err)
 	}

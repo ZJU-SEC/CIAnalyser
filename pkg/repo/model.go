@@ -5,9 +5,11 @@ import (
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/pkg/script"
 	"fmt"
-	"gorm.io/gorm"
 	"path"
+	"strings"
 	"sync"
+
+	"gorm.io/gorm"
 )
 
 // Repo schema for repo's metadata
@@ -48,7 +50,8 @@ func (r *Repo) Check() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := model.DB.Model(&Repo{}).Where("ref = ?", r.Ref).Update("checked", true)
+	// res := model.DB.Model(&Repo{}).Where("ref = ?", r.Ref).Update("checked", true)
+	res := model.DB.Model(&Repo{}).Where("ref = ?", r.Ref).Update("cloned", true)
 	if res.Error != nil {
 		fmt.Println("[ERR] cannot check", r.Ref, res.Error)
 	} else {
@@ -71,11 +74,15 @@ func (r *Repo) Delete() {
 }
 
 func (r *Repo) GitURL() string {
-	return "https://github.com" + r.Ref + ".git"
+	// if start with a slash, remove it first
+	ref := "/" + strings.TrimPrefix(r.Ref, "/")
+	return "https://github.com" + ref + ".git"
 }
 
 func (r *Repo) LocalPath() string {
-	return path.Join(config.REPOS_PATH, r.Ref[1:])
+	// if start with a slash, remove it first
+	path_with_slash := "/" + strings.TrimPrefix(r.Ref, "/")
+	return path.Join(config.REPOS_PATH, path_with_slash[1:])
 }
 
 func (r *Repo) WorkflowsPath() string {
