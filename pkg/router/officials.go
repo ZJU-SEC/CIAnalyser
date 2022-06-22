@@ -246,6 +246,8 @@ func get_dependents(url string, db *gorm.DB, repo_id string) {
 	}
 }
 
+// crawl package identifier from url.
+// such interface design makes recovery easy (but not that easy thanks to the complex webpage design)
 func get_package_dependents(url string, package_name string, db *gorm.DB, repo_id string) {
 	// next_page := ""
 	c := colly.NewCollector()
@@ -255,6 +257,8 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 	if DEBUG {
 		fmt.Println("visiting " + url)
 	}
+
+	// use the same crawler to visit next page if there is one
 	c.OnHTML("a", func(e *colly.HTMLElement) {
 		if strings.Contains(e.Text, "Next") && e.Attr("rel") == "nofollow" {
 			if strings.Contains(e.Attr("href"), "/network/dependents") {
@@ -279,10 +283,10 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 	star_cnt := make([]int, 0)
 	fork_cnt := make([]int, 0)
 
+	// get stars count and fork count
 	c.OnHTML("span", func(e *colly.HTMLElement) {
 		if e.ChildAttr("svg", "class") == "octicon octicon-star" {
 			star_count_string := strings.Trim(e.Text, " \t\n\r")
-			// count, err := strconv.Atoi(star_count_string)
 			count, err := strconv.Atoi(strings.ReplaceAll(star_count_string, ",", ""))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, star_count_string+" is not a valid star count!")
@@ -290,7 +294,6 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 			star_cnt = append(star_cnt, count)
 		} else if e.ChildAttr("svg", "class") == "octicon octicon-repo-forked" {
 			fork_count_string := strings.Trim(e.Text, " \t\n\r")
-			// count, err := strconv.Atoi(fork_count_string)
 			count, err := strconv.Atoi(strings.ReplaceAll(fork_count_string, ",", ""))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, fork_count_string+" is not a valid fork count!")
@@ -299,13 +302,14 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 		}
 	})
 
+	// if the `Next` button goes gray, all the dependents are collected
 	c.OnHTML("button", func(e *colly.HTMLElement) {
 		if e.Attr("disabled") == "disabled" && e.Text == "Next" {
-			// this means the next button is diabled, and the
 			finished = true
 		}
 	})
 
+	// if no dependents, the info will show, but not a disabled next button
 	c.OnHTML("p", func(e *colly.HTMLElement) {
 		if strings.Contains(e.Text, "We haven’t found any dependents for this repository yet.") || strings.Contains(e.Text, "keep looking!") {
 			finished = true
@@ -317,16 +321,12 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 
 	c.Visit(url)
 
+	// redundant check
+	// have no error in the 8 billion depend relations
+	// but who knows when bugs will occur
 	if len(fork_cnt) != len(to_insert) {
-		// if len(fork_cnt) == len(to_insert)-1 {
-		// 	to_insert = to_insert[1:]
-		// 	if DEBUG {
-		// 		fmt.Println("get where forked from, removing this one")
-		// 	}
-		// } else {
 		fmt.Fprintf(os.Stderr, "fork count and to insert count don't match!\n forkcount: %d\n starcount: %d\n recordcount: %d\n", len(fork_cnt), len(star_cnt), len(to_insert))
 		fmt.Println(to_insert)
-		// }
 	}
 
 	for i := 0; i < len(fork_cnt); i++ {
@@ -373,11 +373,6 @@ func get_package_dependents(url string, package_name string, db *gorm.DB, repo_i
 	if len(to_insert) > 0 {
 		db.Clauses(clause.OnConflict{DoNothing: true}).CreateInBatches(&to_insert, 100)
 	}
-
-	// if next_page != "" {
-	// 	random_delay_ms(700)
-	// 	get_package_dependents(next_page, package_name, db, repo_id)
-	// }
 }
 
 func RecoverCrawlAll() bool {
@@ -391,16 +386,32 @@ func RecoverCrawlAll() bool {
 			fmt.Println("recovering " + pack.RepoIdentifier + ": " + pack.PackageIdentifier + " from " + pack.LastVisitedUrl)
 		}
 		// this means the packages may not be get properly
-		// if strings.HasSuffix(pack.LastVisitedUrl, "/network/dependents") {
-		// 	get_dependents(pack.LastVisitedUrl, db, pack.RepoIdentifier)
-		// } else {
-		get_package_dependents(pack.LastVisitedUrl, pack.PackageIdentifier, db, pack.RepoIdentifier)
-		// }
+		// e.g. get |  repo_identifier | package_identifier | finished | last_visited_url       | failed_times |
+		//			| actions/checkout | 				    | false    | .../network/dependents | 1			   |
+		// but not all the packages
+		// so function get_dependents() instead of get_package_dependents() should be applied
+		if strings.HasSuffix(pack.LastVisitedUrl, "/network/dependents") {
+			check_repo_records := make([]CheckedPackage, 0)
+			db.Where("repo_identifier = ?", pack.RepoIdentifier).Find(&check_repo_records)
+			// make sure no package of current repo is collected.
+			// e.g. get |  repo_identifier | package_identifier | finished | last_visited_url       | failed_times |
+			//			| actions/checkout | 				    | false    | .../network/dependents | 1			   |
+			// 			| actions/checkout | checkout			| false    | .../something<HASH>    | 1            |
+			if len(check_repo_records) == 1 && check_repo_records[0].PackageIdentifier == "" {
+				get_dependents(pack.LastVisitedUrl, db, pack.RepoIdentifier)
+			}
+		} else {
+			// all the packages is added to the `checked_packages` table, only need to get package dependents
+			get_package_dependents(pack.LastVisitedUrl, pack.PackageIdentifier, db, pack.RepoIdentifier)
+		}
 		random_delay_ms(1000)
 	}
+
 	if len(to_visit) > 0 {
+		// get something
 		return true
 	} else {
+		// can get nothing
 		return false
 	}
 }
