@@ -30,7 +30,9 @@ func main() {
 	case "extract-script":
 		script.Extract()
 	case "clone-script":
-		script.Clone()
+		for true {
+			script.Clone()
+		}
 	//case "dependent":
 	//	repo.GetDependentsReposAll()
 	case "clone-repo":

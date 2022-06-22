@@ -6,6 +6,7 @@ import (
 	"CIAnalyser/utils"
 	"fmt"
 	"math/rand"
+
 	"os"
 	"path"
 	"sync"
@@ -18,7 +19,7 @@ import (
 )
 
 func Clone() {
-	os.RemoveAll(config.REPOS_PATH)
+	// os.RemoveAll(config.REPOS_PATH)
 
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
@@ -94,7 +95,7 @@ func downloadRepo(repo *Repo) {
 	if utils.DirExists(repo.WorkflowsPath()) {
 		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
 	}
-	os.RemoveAll(repo.LocalPath())
+	// os.RemoveAll(repo.LocalPath())
 	repo.Check()
 }
 
