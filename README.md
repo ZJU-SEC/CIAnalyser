@@ -38,4 +38,25 @@ $ go build CIAnalyser
 
 ```bash
 $ ./CIAnalyser
+
+These are common CIAnalyser commands used in various situations:
+
+working with official action scripts:
+  official-actions    get official actions from GitHub marketplace
+  official-repos      use the actions got to fetch their repositories
+  
+download information & clone repositoreis
+  dependents          get all the dependents from the action repositories via 'Insight' page
+  recover             recover the failed process in the `dependents` stage
+  migrate             migerate the repos found in `dependents` stage to list repo
+  clone-repo          download all the repositories
+  
+other options provided by CIAnalyser
+  crawl-script
+  extract-script
+  clone-script
+  clone-contributor
+  extract-credential
+  label-usage
+  parse-use
 ```
