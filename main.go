@@ -1,14 +1,14 @@
 package main
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/analyzer"
-	"CIHunter/pkg/contributor"
-	"CIHunter/pkg/credential"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/repo"
-	"CIHunter/pkg/script"
-	"CIHunter/pkg/verified"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/analyzer"
+	"CIAnalyser/pkg/contributor"
+	"CIAnalyser/pkg/credential"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/repo"
+	"CIAnalyser/pkg/router"
+	"CIAnalyser/pkg/script"
 	"fmt"
 	"os"
 )
@@ -25,20 +25,20 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "index-repo":
-		repo.Index()
-	case "clone-repo":
-		repo.Clone()
+	case "crawl-script":
+		script.Crawl()
 	case "extract-script":
 		script.Extract()
 	case "clone-script":
-		script.Clone()
-	case "categorize-script":
-		script.Categorize()
+		for true {
+			script.Clone()
+		}
+	//case "dependent":
+	//	repo.GetDependentsReposAll()
+	case "clone-repo":
+		repo.Clone()
 	case "crawl-contributor":
 		contributor.Crawl()
-	case "crawl-verified":
-		verified.Crawl()
 	case "extract-credential":
 		credential.Extract()
 	case "label-usage":
@@ -49,6 +49,12 @@ func main() {
 		script.ParseUsing()
 	case "analyze":
 		analyzer.Analyze()
+	case "recover":
+		for router.RecoverCrawlAll() {
+			// do nothing
+		}
+	case "migrate":
+		router.RelationsToRepos()
 	default:
 		fmt.Println("not a valid stage code")
 	}

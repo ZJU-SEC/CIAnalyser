@@ -1,38 +1,45 @@
 package script
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
 	"fmt"
-	"gorm.io/gorm/clause"
+	"golang.org/x/exp/slices"
 	"path"
 	"strings"
 	"sync"
+
+	"gorm.io/gorm/clause"
 )
 
 // Script schema for script's metadata
 type Script struct {
-	ID                uint   `gorm:"primaryKey;autoIncrement;"`
-	Ref               string `gorm:"uniqueIndex"`
-	Maintainer        string
-	Verified          bool `gorm:"default:false"`
-	Checked           bool `gorm:"default:false"`
+	// basic
+	ID  uint `gorm:"primaryKey;autoIncrement;"`
+	Url string
+
+	// crawl
+	Ref           string
+	Category      string
+	OnMarketplace bool `gorm:"default:false"`
+	Verified      bool `gorm:"default:false"`
+	StarCount     string
+
+	// clone
+	Cloned            bool `gorm:"default:false"`
 	Using             string
-	IsDeployment      bool  `gorm:"default:false"`
-	IsRelease         bool  `gorm:"default:false"`
 	VersionCount      int   `gorm:"default:0"`
 	LatestVersionTime int64 `gorm:"default:0"` // time for the latest version
 }
 
-func (s *Script) fetchOrCreate() {
+func (s *Script) Create() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(s)
-	if res.Error != nil { // create failed
-		fmt.Println("[ERR] cannot create script", s.Ref, res.Error)
-	} else if res.RowsAffected == 0 { // create nothing, fetch
-		model.DB.Where(Script{Ref: s.Ref}).First(s)
+	res := model.DB.Model(&Script{}).
+		Where(Script{Ref: s.Ref, Url: s.Url})
+	if res.RowsAffected == 0 {
+		model.DB.Create(s)
 	}
 
 	mutex.Unlock()
@@ -130,4 +137,30 @@ func (u *Usage) ScriptRef() string {
 
 func (u *Usage) Version() string {
 	return strings.Split(u.Use, "@")[1]
+}
+
+type Verified struct {
+	ID   uint   `gorm:"primaryKey;autoIncrement"`
+	Name string `gorm:"uniqueIndex"`
+}
+
+func (v *Verified) Create() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(v)
+
+	mutex.Unlock()
+}
+
+var verified []string = nil
+
+func IsVerified(name string) bool {
+	if verified == nil {
+		model.DB.Model(&Verified{}).Select("name").Find(&verified)
+		slices.Sort(verified)
+	}
+
+	_, exist := slices.BinarySearch(verified, name)
+	return exist
 }

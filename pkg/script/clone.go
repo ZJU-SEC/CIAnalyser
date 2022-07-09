@@ -1,12 +1,13 @@
 package script
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
 	"fmt"
+	"os"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/shomali11/parallelizer"
-	"os"
 )
 
 func Clone() {

@@ -1,4 +1,5 @@
 # Compiled binray
+CIAnalyser
 CIHunter
 
 # Binaries for programs and plugins
@@ -19,3 +20,4 @@ CIHunter
 .idea/
 config.ini
 *.xlsx
+nohup.out

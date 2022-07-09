@@ -1,14 +1,19 @@
 package utils
 
 import (
-	"CIHunter/config"
+	"CIAnalyser/config"
 	"fmt"
-	"github.com/gocolly/colly"
 	"math/rand"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/gocolly/colly"
 )
+
+var DIGITS = "0123456789"
+var ALPHAS = "abcdefghijklmnopqrstuvwxyz"
+var ALLCHARS = ALPHAS + DIGITS
 
 func RandomString() string {
 	const bytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -108,4 +113,10 @@ func RequestGitHubToken() string {
 
 	mutex.Unlock()
 	return token
+}
+
+func RandomDelay(ms int) {
+	rand.Seed(time.Now().UnixNano())
+	n := rand.Intn(ms)
+	time.Sleep(time.Duration(n) * time.Millisecond)
 }

@@ -1,23 +1,25 @@
 package repo
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/otiai10/copy"
-	"github.com/shomali11/parallelizer"
 	"math/rand"
+
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/otiai10/copy"
+	"github.com/shomali11/parallelizer"
 )
 
 func Clone() {
-	os.RemoveAll(config.REPOS_PATH)
+	// os.RemoveAll(config.REPOS_PATH)
 
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
@@ -26,7 +28,7 @@ func Clone() {
 	defer group.Close()
 
 	// get database iterator
-	rows, err := model.DB.Model(&Repo{}).Where("checked = ?", false).Rows()
+	rows, err := model.DB.Model(&Repo{}).Where("cloned = ?", false).Rows()
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +58,7 @@ func Clone() {
 		var repo Repo
 		model.DB.ScanRows(rows, &repo)
 
-		if !repo.Checked {
+		if !repo.Cloned {
 			group.Add(func() {
 				downloadRepo(&repo)
 			})
@@ -93,7 +95,7 @@ func downloadRepo(repo *Repo) {
 	if utils.DirExists(repo.WorkflowsPath()) {
 		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
 	}
-	os.RemoveAll(repo.LocalPath())
+	// os.RemoveAll(repo.LocalPath())
 	repo.Check()
 }
 

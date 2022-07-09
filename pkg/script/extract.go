@@ -1,17 +1,16 @@
 package script
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/verified"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"github.com/shomali11/parallelizer"
 	"io/ioutil"
 	"strings"
 )
 
 func Extract() {
-	if !model.DB.Migrator().HasTable(&verified.Verified{}) {
+	if !model.DB.Migrator().HasTable(&Verified{}) {
 		panic("does not have the table: `verified`")
 	}
 
@@ -53,18 +52,9 @@ func analyzeUses(job *model.Job, measure *model.Measure) {
 
 		// record this script
 		script := Script{}
+		script.OnMarketplace = false
 		script.Ref = strings.Split(step.Uses, "@")[0]
-		script.Maintainer = strings.Split(script.Ref, "/")[0]
-		script.Verified = verified.Exist(script.Maintainer)
-		script.fetchOrCreate()
-
-		usage := Usage{
-			MeasureID: measure.ID,
-			Measure:   *measure,
-			ScriptID:  script.ID,
-			Script:    script,
-			Use:       step.Uses,
-		}
-		usage.create()
+		script.Verified = IsVerified(strings.Split(script.Ref, "/")[0])
+		script.Create()
 	}
 }

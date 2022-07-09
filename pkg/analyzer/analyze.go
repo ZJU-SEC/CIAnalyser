@@ -1,11 +1,10 @@
 package analyzer
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/credential"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/script"
-	"CIHunter/pkg/verified"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/credential"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/xuri/excelize/v2"
@@ -408,7 +407,7 @@ func reportVerified(f *excelize.File) {
 	f.SetCellValue(sheet, "A4", "Influenced Repos")
 
 	var vCreator, tCreator int64
-	model.DB.Model(&verified.Verified{}).Count(&vCreator)
+	model.DB.Model(&script.Verified{}).Count(&vCreator)
 	model.DB.Model(&script.Script{}).Distinct("maintainer").Count(&tCreator)
 	f.SetCellValue(sheet, "B2",
 		fmt.Sprintf("%d (%.2f%%)",

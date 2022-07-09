@@ -1,9 +1,9 @@
 package credential
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"github.com/shomali11/parallelizer"
 	"io/ioutil"
 	"strings"

@@ -1,0 +1,28 @@
+package main
+
+import "os"
+
+func main() {
+	move := os.Args[1]
+	switch move {
+	case "--official-actions":
+		// gets all the official actions, along with their market place pages, stars, categories.
+		get_official_actions_all()
+	case "--official-repos":
+		// using the market place page to get repository url
+		get_official_repos()
+	case "--dependents":
+		// using repository url to get dependents
+		get_dependents_repos_all()
+	case "--recover":
+		// this function recover the crawling process of all the dependencies failed in previous stage
+		for recover_crawl_all() {
+			// nothing
+		}
+	case "--analyze":
+		update_related_repos()
+		analyze_all()
+	case "--cveActions":
+		get_cveAction_list()
+	}
+}

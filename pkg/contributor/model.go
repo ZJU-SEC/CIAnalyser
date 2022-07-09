@@ -1,8 +1,8 @@
 package contributor
 
 import (
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/script"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
 	"fmt"
 	"gorm.io/gorm/clause"
 	"sync"

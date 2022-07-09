@@ -1,7 +1,7 @@
 package credential
 
 import (
-	"CIHunter/pkg/model"
+	"CIAnalyser/pkg/model"
 	"fmt"
 	"sync"
 )
