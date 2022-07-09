@@ -19,8 +19,6 @@ import (
 )
 
 func Clone() {
-	// os.RemoveAll(config.REPOS_PATH)
-
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
 		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),

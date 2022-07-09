@@ -7,7 +7,6 @@ import (
 	"CIAnalyser/pkg/credential"
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/pkg/repo"
-	"CIAnalyser/pkg/router"
 	"CIAnalyser/pkg/script"
 	"fmt"
 	"os"
@@ -25,19 +24,19 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "crawl-script":
+	// data collection
+	case "crawl-script": // 1st way to get CI scripts
 		script.Crawl()
-	case "extract-script":
+	case "extract-script": // 2nd way to get CI scripts
 		script.Extract()
-	case "clone-script":
-		for true {
-			script.Clone()
-		}
-	//case "dependent":
-	//	repo.GetDependentsReposAll()
+	case "clone-script": // clone scripts
+		script.Clone()
+	case "dependent":
+		repo.GetDependents()
 	case "clone-repo":
 		repo.Clone()
-	case "crawl-contributor":
+	// data analysis
+	case "crawl-contributor": // not in using
 		contributor.Crawl()
 	case "extract-credential":
 		credential.Extract()
@@ -49,12 +48,6 @@ func main() {
 		script.ParseUsing()
 	case "analyze":
 		analyzer.Analyze()
-	case "recover":
-		for router.RecoverCrawlAll() {
-			// do nothing
-		}
-	case "migrate":
-		router.RelationsToRepos()
 	default:
 		fmt.Println("not a valid stage code")
 	}

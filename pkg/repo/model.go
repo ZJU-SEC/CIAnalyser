@@ -14,12 +14,14 @@ import (
 
 // Repo schema for repo's metadata
 type Repo struct {
-	ID     uint   `gorm:"primaryKey;autoIncrement"`
-	Ref    string `gorm:"uniqueIndex"`
-	Cloned bool   `gorm:"default:false"`
+	ID        uint   `gorm:"primaryKey;autoIncrement"`
+	Ref       string `gorm:"uniqueIndex"`
+	Cloned    bool   `gorm:"default:false"`
+	StarCount uint   `gorm:"default:0"`
+	ForkCount uint   `gorm:"default:0"`
 }
 
-type RepoScriptRelation struct {
+type Dependency struct {
 	RepoID   uint
 	Repo     Repo `gorm:"foreignKey:RepoID"`
 	ScriptID uint

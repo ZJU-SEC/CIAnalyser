@@ -18,12 +18,16 @@ func Crawl() {
 		panic(err)
 	}
 
+	// manually add 2 verified creators
+	manuallyVerify("github")
+	manuallyVerify("azure")
+
 	// crawl scripts on marketplace
 	for _, char := range utils.ALLCHARS {
 		getScriptsWithKeyword(string(char))
 	}
 
-	// select
+	// parse scripts' details
 	rows, _ := model.DB.Model(&Script{}).Rows()
 	for rows.Next() {
 		var s Script

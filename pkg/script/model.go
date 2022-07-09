@@ -5,11 +5,10 @@ import (
 	"CIAnalyser/pkg/model"
 	"fmt"
 	"golang.org/x/exp/slices"
+	"gorm.io/gorm/clause"
 	"path"
 	"strings"
 	"sync"
-
-	"gorm.io/gorm/clause"
 )
 
 // Script schema for script's metadata
@@ -30,6 +29,8 @@ type Script struct {
 	Using             string
 	VersionCount      int   `gorm:"default:0"`
 	LatestVersionTime int64 `gorm:"default:0"` // time for the latest version
+
+	LastVisitedURL string // record last visited page for recovery
 }
 
 func (s *Script) Create() {
@@ -142,6 +143,16 @@ func (u *Usage) Version() string {
 type Verified struct {
 	ID   uint   `gorm:"primaryKey;autoIncrement"`
 	Name string `gorm:"uniqueIndex"`
+}
+
+func manuallyVerify(name string) {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	v := Verified{Name: name}
+	model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&v)
+
+	mutex.Unlock()
 }
 
 func (v *Verified) Create() {

@@ -66,26 +66,3 @@ func crawl(s *script.Script) {
 
 	c.Visit(fmt.Sprintf("https://api.github.com/repos/%s/contributors", s.SrcRef()))
 }
-
-//import (
-//	"CIAnalyser/pkg/model"
-//	"CIAnalyser/utils"
-//	"fmt"
-//	"github.com/gocolly/colly"
-//	"strconv"
-//	"strings"
-//	"time"
-//)
-//
-//package maintainers
-//
-//import (
-//"CIAnalyser/pkg/model"
-//"CIAnalyser/utils"
-//"fmt"
-//"github.com/gocolly/colly"
-//"strconv"
-//"strings"
-//"time"
-//)
-//
