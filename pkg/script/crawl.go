@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"gorm.io/gorm/clause"
 )
 
 func Crawl() {
@@ -41,15 +40,16 @@ func getScriptsWithKeyword(keyword string) {
 	resultNum := 0
 	c := utils.CommonCollector()
 
-	toVisit := make([]Script, 0)
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		if strings.HasPrefix(e.Attr("href"), "/marketplace/actions/") {
 			starStr := e.ChildText("span.text-small.color-fg-muted.text-bold")
-			toVisit = append(toVisit, Script{
+
+			s := Script{
+				Url:           "https://github.com" + e.Attr("href"),
 				StarCount:     strings.Split(starStr, " ")[0],
 				OnMarketplace: true,
-				Url:           "https://github.com" + e.Attr("href"),
-			})
+			}
+			s.Create()
 		}
 	})
 
@@ -80,8 +80,6 @@ func getScriptsWithKeyword(keyword string) {
 			for i := 2; i <= pageNum; i++ {
 				c.Visit("https://github.com/marketplace?type=actions&query=" + keyword + "&page=" + strconv.Itoa(i))
 			}
-
-			model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&toVisit)
 		} else {
 			fmt.Println("Keyword " + keyword + " have " + strconv.Itoa(resultNum) + " results, splitting ...")
 			for _, char := range utils.ALLCHARS {

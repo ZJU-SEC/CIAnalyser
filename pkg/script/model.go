@@ -37,8 +37,7 @@ func (s *Script) Create() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	res := model.DB.Model(&Script{}).
-		Where(Script{Ref: s.Ref, Url: s.Url})
+	res := model.DB.Model(&Script{}).Where(Script{Ref: s.Ref, Url: s.Url})
 	if res.RowsAffected == 0 {
 		model.DB.Create(s)
 	}
