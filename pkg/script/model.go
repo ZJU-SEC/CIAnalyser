@@ -20,9 +20,9 @@ type Script struct {
 	// crawl
 	Ref           string
 	Category      string
-	OnMarketplace bool `gorm:"default:false"`
-	Verified      bool `gorm:"default:false"`
-	StarCount     string
+	OnMarketplace bool   `gorm:"default:false"`
+	Verified      bool   `gorm:"default:false"`
+	StarCount     string `gorm:"default:0"`
 
 	// clone
 	Cloned            bool `gorm:"default:false"`

@@ -20,7 +20,6 @@ var WORKFLOWS_PATH string
 var BATCH_SIZE int
 
 // Web
-var GITHUB_TOKEN []string
 var TRYOUT int
 var TIMEOUT int
 var TIMEOUT_THRESHOLD int
@@ -62,7 +61,6 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
-	GITHUB_TOKEN = WEBSection.Key("GITHUB_TOKEN").ValueWithShadows() // parse token list from config
 	TRYOUT = WEBSection.Key("TRYOUT").MustInt(5)
 	TIMEOUT = WEBSection.Key("TIMEOUT").MustInt(3)
 	TIMEOUT_THRESHOLD = WEBSection.Key("TIMEOUT_THRESHOLD").MustInt(10)

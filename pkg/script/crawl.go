@@ -39,7 +39,7 @@ func Crawl() {
 
 func getScriptsWithKeyword(keyword string) {
 	resultNum := 0
-	c := colly.NewCollector()
+	c := utils.CommonCollector()
 
 	toVisit := make([]Script, 0)
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -70,12 +70,6 @@ func getScriptsWithKeyword(keyword string) {
 		}
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
-	})
-	c.OnError(func(_ *colly.Response, err error) {
-		fmt.Println(err)
-	})
 	c.Visit("https://github.com/marketplace?type=actions&query=" + keyword)
 
 	if resultNum > 0 {
@@ -101,7 +95,7 @@ func getScriptsWithKeyword(keyword string) {
 func getScriptDetail(s *Script) {
 	getDetail := false
 
-	c := colly.NewCollector()
+	c := utils.CommonCollector()
 	c.OnHTML("aside", func(e *colly.HTMLElement) {
 		directLink := ""
 

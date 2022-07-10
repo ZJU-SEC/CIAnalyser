@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -94,25 +93,6 @@ func DirExists(path string) bool {
 	} else {
 		return false
 	}
-}
-
-var count = 0
-
-// RequestGitHubToken return one token from the list and loop the pointer
-func RequestGitHubToken() string {
-	l := len(config.GITHUB_TOKEN)
-	var mutex sync.Mutex
-	mutex.Lock()
-
-	token := config.GITHUB_TOKEN[count%l] // select one token
-	count++                               // auto increment
-
-	if count > l { // prevent overflow
-		count -= l
-	}
-
-	mutex.Unlock()
-	return token
 }
 
 func RandomDelay(ms int) {
