@@ -3,7 +3,6 @@ package main
 import (
 	"CIAnalyser/config"
 	"CIAnalyser/pkg/analyzer"
-	"CIAnalyser/pkg/contributor"
 	"CIAnalyser/pkg/credential"
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/pkg/repo"
@@ -36,8 +35,6 @@ func main() {
 	case "clone-repo":
 		repo.Clone()
 	// data analysis
-	case "crawl-contributor": // not in using
-		contributor.Crawl()
 	case "extract-credential":
 		credential.Extract()
 	case "label-usage":
