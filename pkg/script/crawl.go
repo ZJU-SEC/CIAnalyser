@@ -31,8 +31,11 @@ func Crawl() {
 	for rows.Next() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
-		getScriptDetail(&s)
-		model.DB.Save(&s)
+		if getScriptDetail(&s) {
+			model.DB.Save(&s)
+		} else {
+			s.Delete()
+		}
 	}
 }
 
@@ -89,11 +92,13 @@ func getScriptsWithKeyword(keyword string) {
 	}
 }
 
-// this function get official scripts' repositories by entering the link in marketplace page
-func getScriptDetail(s *Script) {
-	getDetail := false
-
+// getScriptDetail get official scripts' repositories by entering the link in marketplace page
+// and return true if succeeded
+func getScriptDetail(s *Script) bool {
+	success := true
 	c := utils.CommonCollector()
+
+	// get repositories link
 	c.OnHTML("aside", func(e *colly.HTMLElement) {
 		directLink := ""
 
@@ -107,21 +112,24 @@ func getScriptDetail(s *Script) {
 			}
 		}
 
-		getDetail = true
 		identifier := directLink[19:]
 		s.Ref = identifier
 		s.Verified = IsVerified(strings.Split(s.Ref, "/")[0])
 	})
 
+	// get category
 	c.OnHTML("a.topic-tag.topic-tag-link.f6", func(e *colly.HTMLElement) {
-		getDetail = true
 		s.Category = s.Category + strings.TrimSpace(e.Text) + ";"
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		if r.StatusCode == 404 {
+			success = false
+		}
+	})
+
 	c.Visit(s.Url)
-	if config.DEBUG && !getDetail {
-		fmt.Printf("didn't get repo at %s\n", s.Url)
-	}
+	return success
 }
 
 func isDirectRepoLink(candidate string) bool {
