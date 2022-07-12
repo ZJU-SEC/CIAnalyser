@@ -61,13 +61,10 @@ func getPackages(s *script.Script) {
 
 		// does have multiple package -> select one that matches
 		if isPackageList {
-			for packageName, packagePath := range packageList {
-				if config.DEBUG {
-					fmt.Println("visiting package dependents" + " https://github.com" + packagePath)
-				}
-				if packageName == s.Ref { // is a ref then visit
-					getDependents("https://github.com"+packagePath, s)
-				}
+			for _, packagePath := range packageList {
+				//if packageName == s.Ref { // is a ref then visit
+				getDependents("https://github.com"+packagePath, s)
+				//}
 			}
 		} else {
 			getDependents(dependentURL, s)
@@ -80,26 +77,30 @@ func getPackages(s *script.Script) {
 // getDependents crawl package identifier from url.
 // such interface design makes recovery easy (but not that easy thanks to the complex webpage design)
 func getDependents(packageURL string, s *script.Script) {
-	c := utils.CommonCollector()
-	finished := false
-	lastVisited := packageURL
-
 	if config.DEBUG {
-		fmt.Println("visiting " + packageURL)
+		fmt.Println("[DEBUG] visiting", packageURL)
 	}
 
-	// parse dependents
-	c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
-		// TODO parse dependents
-
-		s.LastVisitedURL = lastVisited
-	})
-
-	c.Visit(packageURL)
-
-	if !finished {
-		// TODO recovery mechanism
-	}
+	//c := utils.CommonCollector()
+	//finished := false
+	//lastVisited := packageURL
+	//
+	//if config.DEBUG {
+	//	fmt.Println("visiting " + packageURL)
+	//}
+	//
+	//// parse dependents
+	//c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
+	//	// TODO parse dependents
+	//
+	//	s.LastVisitedURL = lastVisited
+	//})
+	//
+	//c.Visit(packageURL)
+	//
+	//if !finished {
+	//	// TODO recovery mechanism
+	//}
 
 	// use the same crawler to visit next page if there is one
 	//c.OnHTML("a", func(e *colly.HTMLElement) {
@@ -112,9 +113,6 @@ func getDependents(packageURL string, s *script.Script) {
 	//			c.Visit(e.Attr("href"))
 	//		}
 	//	} else if e.Attr("data-hovercard-type") == "repository" && e.Attr("class") == "text-bold" {
-	//		// TODO fetch or create repositories
-	//
-	//		// TODO create relation
 	//		toInsert = append(toInsert, Repo{
 	//			DependencyIdentifier: url_to_identifier(packageURL),
 	//			PackageIdentifier:    packageName,
