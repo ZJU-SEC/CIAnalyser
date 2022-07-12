@@ -31,6 +31,7 @@ func GetDependents() {
 		model.DB.ScanRows(rows, &s)
 
 		group.Add(func() {
+			s := s
 			getPackages(&s)
 		})
 	}
