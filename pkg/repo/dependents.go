@@ -43,38 +43,23 @@ func getPackages(s *script.Script) {
 	dependentURL := s.SrcURL() + "/network/dependents"
 	c := utils.CommonCollector()
 
-	c.OnHTML("details-menu", func(e *colly.HTMLElement) {
-		if config.DEBUG {
-			fmt.Println("details-menu found")
-		}
+	isList := false
 
-		isPackageList := false
-		packageList := make(map[string]string)
-
-		// traverse items in packages menu
-		e.ForEach("div", func(_ int, e *colly.HTMLElement) {
-			if e.Attr("class") == "select-menu-list" {
-				e.ForEach("a", func(_ int, inside *colly.HTMLElement) {
-					packageList[strings.Trim(inside.Text, "\n ")] = inside.Attr("href")
-				})
-			} else if e.Attr("class") == "select-menu-header" && strings.Contains(e.Text, "Packages") {
-				isPackageList = true
-			}
-		})
-
-		// does have multiple package -> select one that matches
-		if isPackageList {
-			for packageName, packageURL := range packageList {
-				if packageName == s.Ref { // if the packageName equals the reference, collect it
-					getDependents("https://github.com"+packageURL, s)
-				}
-			}
-		} else {
-			getDependents(dependentURL, s)
+	// find package list
+	c.OnHTML("a.select-menu-item", func(e *colly.HTMLElement) {
+		isList = true
+		url := e.Attr("href")
+		name := strings.Trim(e.Text, "\n ")
+		if name == s.Ref {
+			getDependents("https://github.com"+url, s)
 		}
 	})
 
 	c.Visit(dependentURL)
+
+	if !isList {
+		getDependents(dependentURL, s)
+	}
 }
 
 // getDependents crawl package identifier from url.
