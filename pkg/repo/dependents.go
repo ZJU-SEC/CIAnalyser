@@ -60,7 +60,6 @@ func getPackages(s *script.Script) {
 
 		// does have multiple package -> select one that matches
 		if isPackageList {
-			fmt.Println("is package list")
 			for packageName, packageURL := range packageList {
 				if packageName == s.Ref { // if the packageName equals the reference, collect it
 					getDependents("https://github.com"+packageURL, s)
@@ -78,7 +77,7 @@ func getPackages(s *script.Script) {
 // such interface design makes recovery easy (but not that easy thanks to the complex webpage design)
 func getDependents(packageURL string, s *script.Script) {
 	if config.DEBUG {
-		fmt.Println("[DEBUG] visiting", packageURL)
+		fmt.Println("[DEBUG] on", s.Ref, "visiting", packageURL)
 	}
 
 	//c := utils.CommonCollector()
