@@ -17,7 +17,7 @@ type Script struct {
 	ID  uint `gorm:"primaryKey;autoIncrement;"`
 	Url string
 
-	// crawl
+	// meta
 	Ref           string
 	Category      string
 	OnMarketplace bool   `gorm:"default:false"`
@@ -30,6 +30,8 @@ type Script struct {
 	VersionCount      int   `gorm:"default:0"`
 	LatestVersionTime int64 `gorm:"default:0"` // time for the latest version
 
+	// crawl
+	Checked        bool   `gorm:"default:false"`
 	LastVisitedURL string // record last visited page for recovery
 }
 
