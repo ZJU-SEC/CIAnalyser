@@ -61,13 +61,13 @@ func getPackages(s *script.Script) {
 		// does have multiple package -> select one that matches
 		if isPackageList {
 			fmt.Println("is package list")
-			for a, b := range packageList {
-				fmt.Println(a, b)
-				//getDependents("https://github.com"+packagePath, s)
+			for packageName, packageURL := range packageList {
+				if packageName == s.Ref { // if the packageName equals the reference, collect it
+					getDependents("https://github.com"+packageURL, s)
+				}
 			}
 		} else {
-			fmt.Println("not package list")
-			//getDependents(dependentURL, s)
+			getDependents(dependentURL, s)
 		}
 	})
 
