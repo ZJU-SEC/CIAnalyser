@@ -31,7 +31,6 @@ func GetDependents() {
 		model.DB.ScanRows(rows, &s)
 
 		group.Add(func() {
-			s := s
 			getPackages(&s)
 		})
 	}
@@ -44,10 +43,14 @@ func getPackages(s *script.Script) {
 	dependentURL := s.SrcURL() + "/network/dependents"
 	c := utils.CommonCollector()
 
-	isPackageList := false
-	packageList := make(map[string]string)
-
 	c.OnHTML("details-menu", func(e *colly.HTMLElement) {
+		if config.DEBUG {
+			fmt.Println("details-menu found")
+		}
+
+		isPackageList := false
+		packageList := make(map[string]string)
+
 		// traverse items in packages menu
 		e.ForEach("div", func(_ int, e *colly.HTMLElement) {
 			if e.Attr("class") == "select-menu-list" {
