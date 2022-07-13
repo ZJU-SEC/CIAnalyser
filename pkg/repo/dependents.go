@@ -75,6 +75,7 @@ func getDependents(packageURL string, s *script.Script) {
 
 	// parse dependents
 	c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
+		fmt.Println("one div collected")
 		childInfo := e.ChildAttrs("span.color-fg-muted.text-bold.pl-3", "#text")
 		fmt.Println(childInfo)
 	})
