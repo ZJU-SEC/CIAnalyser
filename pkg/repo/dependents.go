@@ -69,28 +69,23 @@ func getDependents(packageURL string, s *script.Script) {
 		fmt.Println("[DEBUG] on", s.Ref, "visiting", packageURL)
 	}
 
-	//c := utils.CommonCollector()
+	c := utils.CommonCollector()
 	//finished := false
-	//lastVisited := packageURL
-	//
-	//if config.DEBUG {
-	//	fmt.Println("visiting " + packageURL)
-	//}
-	//
-	//// parse dependents
-	//c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
-	//	// TODO parse dependents
-	//
-	//	s.LastVisitedURL = lastVisited
-	//})
-	//
-	//c.Visit(packageURL)
-	//
+	s.LastVisitedURL = packageURL
+
+	// parse dependents
+	c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
+		childInfo := e.ChildAttrs("span.color-fg-muted.text-bold.pl-3", "#text")
+		fmt.Println(childInfo)
+	})
+
+	c.Visit(packageURL)
+
 	//if !finished {
 	//	// TODO recovery mechanism
 	//}
-
-	// use the same crawler to visit next page if there is one
+	//
+	////use the same crawler to visit next page if there is one
 	//c.OnHTML("a", func(e *colly.HTMLElement) {
 	//	if strings.Contains(e.Text, "Next") && e.Attr("rel") == "nofollow" {
 	//		if strings.Contains(e.Attr("href"), "/network/dependents") {
