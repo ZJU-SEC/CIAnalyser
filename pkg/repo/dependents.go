@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gocolly/colly"
 	"github.com/shomali11/parallelizer"
+	"strconv"
 	"strings"
 )
 
@@ -40,25 +41,30 @@ func GetDependents() {
 
 // getPackages reach the list of packages in dependents menu
 func getPackages(s *script.Script) {
-	dependentURL := s.SrcURL() + "/network/dependents"
-	c := utils.CommonCollector()
+	// has last visited url, continue it
+	if s.LastVisitedURL != "" {
+		getDependents(s.LastVisitedURL, s)
+	} else {
+		dependentURL := s.SrcURL() + "/network/dependents"
+		c := utils.CommonCollector()
 
-	isList := false
+		isList := false
 
-	// find package list
-	c.OnHTML("a.select-menu-item", func(e *colly.HTMLElement) {
-		isList = true
-		url := e.Attr("href")
-		name := strings.Trim(e.Text, "\n ")
-		if name == s.Ref {
-			getDependents("https://github.com"+url, s)
+		// find package list
+		c.OnHTML("a.select-menu-item", func(e *colly.HTMLElement) {
+			isList = true
+			url := e.Attr("href")
+			name := strings.Trim(e.Text, "\n ")
+			if name == s.Ref {
+				getDependents("https://github.com"+url, s)
+			}
+		})
+
+		c.Visit(dependentURL)
+
+		if !isList {
+			getDependents(dependentURL, s)
 		}
-	})
-
-	c.Visit(dependentURL)
-
-	if !isList {
-		getDependents(dependentURL, s)
 	}
 }
 
@@ -70,16 +76,48 @@ func getDependents(packageURL string, s *script.Script) {
 	}
 
 	c := utils.CommonCollector()
-	//finished := false
-	s.LastVisitedURL = packageURL
 
 	// parse dependents
 	c.OnHTML("div.Box-row.d-flex.flex-items-center", func(e *colly.HTMLElement) {
 		childInfo := strings.Fields(e.ChildText("span.color-fg-muted.text-bold.pl-3"))
-		star := childInfo[0]
-		fork := childInfo[1]
-		fmt.Println(star, fork)
+		star, _ := strconv.Atoi(childInfo[0])
+		fork, _ := strconv.Atoi(childInfo[1])
+		repoRef := e.ChildAttr("a.text-bold", "href")
+
+		repo := Repo{
+			Ref:       repoRef,
+			StarCount: star,
+			ForkCount: fork,
+		}
+
+		repo.FetchOrCreate()
+
+		relation := Dependency{
+			RepoID:   repo.ID,
+			Repo:     repo,
+			ScriptID: s.ID,
+			Script:   *s,
+		}
+
+		relation.Create()
 	})
+
+	// parse next page
+	c.OnHTML("a.btn.btn-outline.BtnGroup-item", func(e *colly.HTMLElement) {
+		if e.Text == "Next" {
+			nextURL := e.Attr("href")
+			s.LastVisitedURL = nextURL
+			c.Visit(nextURL)
+		}
+	})
+
+	// disabled button -> clear URL
+	c.OnHTML("button.btn.btn-outline.BtnGroup-item", func(e *colly.HTMLElement) {
+		if e.Text == "Next" {
+			s.LastVisitedURL = ""
+		}
+	})
+	s.Update()
 
 	c.Visit(packageURL)
 
