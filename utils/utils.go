@@ -63,7 +63,7 @@ func CommonCollector() *colly.Collector {
 			return
 		}
 		if config.DEBUG {
-			fmt.Println("[debug]", r.StatusCode, r.Request.URL)
+			fmt.Println("[WARNING]", r.StatusCode, r.Request.URL)
 		}
 		retryRequest(r.Request, config.TRYOUT)
 	})
