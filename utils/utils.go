@@ -81,7 +81,7 @@ func retryRequest(r *colly.Request, maxRetries int) int {
 		time.Sleep(time.Duration(config.TRYOUT-retriesLeft) * time.Second)
 		r.Retry()
 	} else {
-		fmt.Println("! cannot fetch", r.URL)
+		fmt.Println("[ERR] cannot fetch", r.URL)
 	}
 	return retriesLeft
 }
