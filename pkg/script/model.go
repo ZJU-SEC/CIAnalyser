@@ -49,6 +49,15 @@ func (s *Script) Create() {
 	mutex.Unlock()
 }
 
+func (s *Script) Update() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	model.DB.Save(s)
+
+	mutex.Unlock()
+}
+
 func (s *Script) Check() {
 	var mutex sync.Mutex
 	mutex.Lock()

@@ -5,11 +5,10 @@ import (
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/pkg/script"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"path"
 	"strings"
 	"sync"
-
-	"gorm.io/gorm"
 )
 
 // Repo schema for repo's metadata
@@ -17,8 +16,8 @@ type Repo struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement"`
 	Ref       string `gorm:"uniqueIndex"`
 	Cloned    bool   `gorm:"default:false"`
-	StarCount uint   `gorm:"default:0"`
-	ForkCount uint   `gorm:"default:0"`
+	StarCount int    `gorm:"default:0"`
+	ForkCount int    `gorm:"default:0"`
 }
 
 type Dependency struct {
@@ -28,21 +27,29 @@ type Dependency struct {
 	Script   script.Script `gorm:"foreignKey:ScriptID"`
 }
 
-// CreateRepo a repo
-func CreateRepo(href string) {
+func (d *Dependency) Create() {
 	var mutex sync.Mutex
 	mutex.Lock()
 
-	repo := Repo{}
-	res := model.DB.Where("ref = ?", href).First(&repo)
+	var _d Dependency
+	res := model.DB.Model(&Dependency{}).
+		Where("repo_id = ? AND script_id = ?", d.RepoID, d.ScriptID).Limit(1).Find(&_d)
+	if res.RowsAffected == 0 {
+		model.DB.Create(d)
+	}
 
-	if res.Error == gorm.ErrRecordNotFound {
-		repo.Ref = href
-		if err := model.DB.Create(&repo).Error; err != nil {
-			fmt.Println("[ERR] cannot index usecase", href, err)
-		} else {
-			fmt.Println("✔", href, "created")
-		}
+	mutex.Unlock()
+}
+
+func (r *Repo) FetchOrCreate() {
+	var mutex sync.Mutex
+	mutex.Lock()
+
+	res := model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(r)
+	if res.Error != nil {
+		fmt.Println("[ERR] cannot create measure", r.Ref, res.Error)
+	} else if res.RowsAffected == 0 {
+		model.DB.Where(Repo{Ref: r.Ref}).First(r)
 	}
 
 	mutex.Unlock()
