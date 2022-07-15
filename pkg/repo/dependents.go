@@ -111,10 +111,11 @@ func getDependents(packageURL string, s *script.Script) {
 		}
 	})
 
-	// disabled button -> clear URL
+	// disabled button -> finished -> clear URL
 	c.OnHTML("button.btn.btn-outline.BtnGroup-item", func(e *colly.HTMLElement) {
 		if e.Text == "Next" {
 			s.LastVisitedURL = ""
+			s.Checked = true
 		}
 	})
 	s.Update()
