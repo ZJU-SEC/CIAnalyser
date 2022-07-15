@@ -100,7 +100,6 @@ func getDependents(packageURL string, s *script.Script) {
 		}
 
 		relation.Create()
-		fmt.Println("dependency:", repo.Ref, "<->", s.Ref, "created")
 	})
 
 	// parse next page
