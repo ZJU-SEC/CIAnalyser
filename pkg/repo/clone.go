@@ -3,18 +3,16 @@ package repo
 import (
 	"CIAnalyser/config"
 	"CIAnalyser/pkg/model"
-	"CIAnalyser/utils"
 	"fmt"
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"math/rand"
 
-	"os"
-	"path"
 	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/otiai10/copy"
 	"github.com/shomali11/parallelizer"
 )
 
@@ -78,38 +76,33 @@ func downloadRepo(repo *Repo) {
 	}()
 
 	select {
-	case res := <-c:
-		if res != nil {
-			os.RemoveAll(repo.LocalPath())
+	case err := <-c:
+		if err != nil {
 			return
 		}
 	case <-time.After(time.Duration(config.TIMEOUT) * time.Second):
 		fmt.Println("- skipped", repo.Ref)
-		os.RemoveAll(repo.LocalPath())
 		adjustTimeout()
 		return
 	}
 
-	if utils.DirExists(repo.WorkflowsPath()) {
-		copy.Copy(repo.WorkflowsPath(), path.Join(config.WORKFLOWS_PATH, repo.Ref[1:]))
-	}
-	// os.RemoveAll(repo.LocalPath())
 	repo.Check()
 }
 
 func clone(repo *Repo) error {
-	if _, err := git.PlainClone(repo.LocalPath(), false, &git.CloneOptions{
-		URL:   repo.GitURL(),
-		Depth: 1,
+	fs := memfs.New()
+
+	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
+		URL: repo.GitURL(),
 	}); err != nil {
-		switch err {
-		case transport.ErrEmptyRemoteRepository, transport.ErrAuthenticationRequired:
-			repo.Delete()
-		default:
+		if !(err == transport.ErrEmptyRemoteRepository ||
+			err == transport.ErrAuthenticationRequired) {
 			fmt.Println("[ERR] cannot clone", repo.Ref, err)
 		}
 		return err
 	}
+
+	// TODO add operations
 
 	return nil
 }

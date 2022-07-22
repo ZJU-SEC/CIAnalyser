@@ -70,18 +70,6 @@ func (r *Repo) Check() {
 	mutex.Unlock()
 }
 
-func (r *Repo) Delete() {
-	var mutex sync.Mutex
-	mutex.Lock()
-
-	res := model.DB.Delete(r)
-	if res.Error != nil {
-		fmt.Println("[ERR] cannot delete", r.Ref, res.Error)
-	}
-
-	mutex.Unlock()
-}
-
 func (r *Repo) GitURL() string {
 	// if start with a slash, remove it first
 	ref := "/" + strings.TrimPrefix(r.Ref, "/")
