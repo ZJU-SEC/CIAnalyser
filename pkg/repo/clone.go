@@ -5,8 +5,10 @@ import (
 	"CIAnalyser/pkg/model"
 	"fmt"
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"math/rand"
+	"strings"
 
 	"sync"
 	"time"
@@ -92,9 +94,8 @@ func downloadRepo(repo *Repo) {
 func clone(repo *Repo) error {
 	fs := memfs.New()
 
-	if _, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
-		URL: repo.GitURL(),
-	}); err != nil {
+	r, err := git.Clone(memory.NewStorage(), fs, &git.CloneOptions{URL: repo.GitURL()})
+	if err != nil {
 		if !(err == transport.ErrEmptyRemoteRepository ||
 			err == transport.ErrAuthenticationRequired) {
 			fmt.Println("[ERR] cannot clone", repo.Ref, err)
@@ -102,7 +103,34 @@ func clone(repo *Repo) error {
 		return err
 	}
 
-	// TODO add operations
+	// traverse commits
+	commits, _ := r.CommitObjects()
+	commits.ForEach(func(c *object.Commit) error {
+		commitTime := c.Author.When.Unix() // get commit time
+
+		// traverse files
+		files, _ := c.Files()
+		files.ForEach(func(f *object.File) error {
+			// if CI under .github/workflows && is yaml file
+			if strings.Contains(f.Name, ".github/workflows/") &&
+				(strings.HasSuffix(f.Name, ".yaml") ||
+					strings.HasSuffix(f.Name, ".yml")) {
+
+				// get content and save into the database
+				content, _ := f.Contents()
+				configuration := Configuration{
+					RepoID:  repo.ID,
+					Repo:    *repo,
+					Name:    strings.TrimPrefix(f.Name, ".github/workflows/"),
+					Time:    commitTime,
+					Content: content,
+				}
+				model.DB.Create(&configuration)
+			}
+			return nil
+		})
+		return nil
+	})
 
 	return nil
 }

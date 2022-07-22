@@ -1,12 +1,10 @@
 package repo
 
 import (
-	"CIAnalyser/config"
 	"CIAnalyser/pkg/model"
 	"CIAnalyser/pkg/script"
 	"fmt"
 	"gorm.io/gorm/clause"
-	"path"
 	"strings"
 	"sync"
 )
@@ -25,6 +23,15 @@ type Dependency struct {
 	Repo     Repo `gorm:"foreignKey:RepoID"`
 	ScriptID uint
 	Script   script.Script `gorm:"foreignKey:ScriptID"`
+}
+
+type Configuration struct {
+	ID      uint `gorm:"primaryKey;autoIncrement"`
+	RepoID  uint
+	Repo    Repo `gorm:"foreignKey:RepoID"`
+	Name    string
+	Time    int64
+	Content string
 }
 
 func (d *Dependency) Create() {
@@ -74,14 +81,4 @@ func (r *Repo) GitURL() string {
 	// if start with a slash, remove it first
 	ref := "/" + strings.TrimPrefix(r.Ref, "/")
 	return "https://github.com" + ref + ".git"
-}
-
-func (r *Repo) LocalPath() string {
-	// if start with a slash, remove it first
-	path_with_slash := "/" + strings.TrimPrefix(r.Ref, "/")
-	return path.Join(config.REPOS_PATH, path_with_slash[1:])
-}
-
-func (r *Repo) WorkflowsPath() string {
-	return path.Join(r.LocalPath(), ".github", "workflows")
 }
