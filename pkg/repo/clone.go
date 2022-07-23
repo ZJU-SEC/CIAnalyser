@@ -4,11 +4,12 @@ import (
 	"CIAnalyser/config"
 	"CIAnalyser/pkg/model"
 	"fmt"
+	"math/rand"
+	"strings"
+
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"math/rand"
-	"strings"
 
 	"sync"
 	"time"
@@ -19,6 +20,10 @@ import (
 )
 
 func Clone() {
+	err := model.DB.AutoMigrate(&Repo{}, &Configuration{})
+	if err != nil {
+		panic(err)
+	}
 	group := parallelizer.NewGroup(
 		parallelizer.WithPoolSize(config.WORKER),
 		parallelizer.WithJobQueueSize(config.QUEUE_SIZE),
