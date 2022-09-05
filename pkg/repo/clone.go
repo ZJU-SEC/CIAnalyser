@@ -62,8 +62,9 @@ func Clone() {
 		model.DB.ScanRows(rows, &repo)
 
 		if !repo.Cloned {
-			group.Add(func() {
+			group.Add(func() error {
 				downloadRepo(&repo)
+				return nil
 			})
 			count++
 		}

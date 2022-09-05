@@ -31,8 +31,9 @@ func GetDependents() {
 		var s script.Script
 		model.DB.ScanRows(rows, &s)
 
-		group.Add(func() {
+		group.Add(func() error {
 			getPackages(&s)
+			return nil
 		})
 	}
 

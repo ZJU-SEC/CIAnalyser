@@ -22,8 +22,9 @@ func TraverseAuthor(group *parallelizer.Group, authorDir fs.FileInfo, fn func(*m
 			repoPath := path.Join(config.WORKFLOWS_PATH, authorDir.Name(), repoDir.Name())
 
 			// analyze this repository specifically
-			group.Add(func() {
+			group.Add(func() error {
 				TraverseRepo(repoPath, fn)
+				return nil
 			})
 		}
 	}

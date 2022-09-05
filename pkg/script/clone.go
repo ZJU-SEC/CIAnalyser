@@ -23,9 +23,10 @@ func Clone() {
 		var s Script
 		model.DB.ScanRows(rows, &s)
 
-		group.Add(func() {
+		group.Add(func() error {
 			s := s
 			cloneScript(&s)
+			return nil
 		})
 	}
 
