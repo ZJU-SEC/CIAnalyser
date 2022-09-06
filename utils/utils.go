@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -99,4 +100,9 @@ func RandomDelay(ms int) {
 	rand.Seed(time.Now().UnixNano())
 	n := rand.Intn(ms)
 	time.Sleep(time.Duration(n) * time.Millisecond)
+}
+
+func IsWorkflows(name string) bool {
+	return strings.HasPrefix(name, ".github/workflows/") &&
+		(strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml"))
 }

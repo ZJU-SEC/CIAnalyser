@@ -25,7 +25,7 @@ type Dependency struct {
 	Script   script.Script `gorm:"foreignKey:ScriptID"`
 }
 
-type Configuration struct {
+type Workflow struct {
 	ID      uint `gorm:"primaryKey;autoIncrement"`
 	RepoID  uint
 	Repo    Repo `gorm:"foreignKey:RepoID"`

@@ -3,6 +3,7 @@ package repo
 import (
 	"CIAnalyser/config"
 	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -20,7 +21,7 @@ import (
 )
 
 func Clone() {
-	err := model.DB.AutoMigrate(&Repo{}, &Configuration{})
+	err := model.DB.AutoMigrate(&Repo{}, &Workflow{})
 	if err != nil {
 		panic(err)
 	}
@@ -109,29 +110,39 @@ func clone(repo *Repo) error {
 		return err
 	}
 
-	// traverse commits
+	// traverse commits to get all stashed workflows
 	commits, _ := r.CommitObjects()
 	commits.ForEach(func(c *object.Commit) error {
 		commitTime := c.Author.When.Unix() // get commit time
+
+		// check if the commits has changes on workflows
+		hasChange := false
+		listOfChanges, _ := c.Stats()
+		for _, change := range listOfChanges {
+			if utils.IsWorkflows(change.Name) {
+				hasChange = true
+			}
+		}
+
+		if !hasChange {
+			return nil // quick exit
+		}
 
 		// traverse files
 		files, _ := c.Files()
 		files.ForEach(func(f *object.File) error {
 			// if CI under .github/workflows && is yaml file
-			if strings.Contains(f.Name, ".github/workflows/") &&
-				(strings.HasSuffix(f.Name, ".yaml") ||
-					strings.HasSuffix(f.Name, ".yml")) {
-
+			if utils.IsWorkflows(f.Name) {
 				// get content and save into the database
 				content, _ := f.Contents()
-				configuration := Configuration{
+				workflow := Workflow{
 					RepoID:  repo.ID,
 					Repo:    *repo,
 					Name:    strings.TrimPrefix(f.Name, ".github/workflows/"),
 					Time:    commitTime,
 					Content: content,
 				}
-				model.DB.Create(&configuration)
+				model.DB.Create(&workflow)
 			}
 			return nil
 		})
