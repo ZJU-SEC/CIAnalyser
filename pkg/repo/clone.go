@@ -1,9 +1,9 @@
 package repo
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"

@@ -1,8 +1,8 @@
 package verified
 
 import (
-	"CIHunter/pkg/model"
-	"CIHunter/utils"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/utils"
 	"fmt"
 	"github.com/gocolly/colly"
 	"strconv"

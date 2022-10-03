@@ -1,14 +1,14 @@
 package main
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/analyzer"
-	"CIHunter/pkg/contributor"
-	"CIHunter/pkg/credential"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/repo"
-	"CIHunter/pkg/script"
-	"CIHunter/pkg/verified"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/analyzer"
+	"CIAnalyser/pkg/contributor"
+	"CIAnalyser/pkg/credential"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/repo"
+	"CIAnalyser/pkg/script"
+	"CIAnalyser/pkg/verified"
 	"fmt"
 	"os"
 )

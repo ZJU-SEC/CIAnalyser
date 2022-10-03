@@ -1,7 +1,7 @@
 package script
 
 import (
-	"CIHunter/pkg/model"
+	"CIAnalyser/pkg/model"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

@@ -1,7 +1,7 @@
 package verified
 
 import (
-	"CIHunter/pkg/model"
+	"CIAnalyser/pkg/model"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm/clause"
 	"sync"

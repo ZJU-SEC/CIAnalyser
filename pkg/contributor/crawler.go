@@ -1,10 +1,10 @@
 package contributor
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
-	"CIHunter/pkg/script"
-	"CIHunter/utils"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
+	"CIAnalyser/pkg/script"
+	"CIAnalyser/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly"
@@ -66,26 +66,3 @@ func crawl(s *script.Script) {
 
 	c.Visit(fmt.Sprintf("https://api.github.com/repos/%s/contributors", s.SrcRef()))
 }
-
-//import (
-//	"CIHunter/pkg/model"
-//	"CIHunter/utils"
-//	"fmt"
-//	"github.com/gocolly/colly"
-//	"strconv"
-//	"strings"
-//	"time"
-//)
-//
-//package maintainers
-//
-//import (
-//"CIHunter/pkg/model"
-//"CIHunter/utils"
-//"fmt"
-//"github.com/gocolly/colly"
-//"strconv"
-//"strings"
-//"time"
-//)
-//

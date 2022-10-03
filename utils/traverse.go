@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"CIHunter/config"
-	"CIHunter/pkg/model"
+	"CIAnalyser/config"
+	"CIAnalyser/pkg/model"
 	"github.com/shomali11/parallelizer"
 	"gopkg.in/yaml.v3"
 	"io/fs"
