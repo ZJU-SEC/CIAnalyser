@@ -3,7 +3,7 @@
 [![Build](https://github.com/ZJU-SEC/CIAnalyser/actions/workflows/build.yml/badge.svg)](https://github.com/ZJU-SEC/CIAnalyser/actions/workflows/build.yml)
 
 
-> `CIAnalyser` is a tool developed for our paper: _Understanding Security Threats in Open Source Software CI/CD Scripts_. It is intended to crawl repositories with OSS CI configured and analyze the meta information.
+> `CIAnalyser` is a tool developed for our paper: _Understanding Security Threats in Open Source Software CI/CD Scripts_ (published on [TDSC](https://pan-ziyue.github.io/files/ci-security.pdf)). It is intended to crawl repositories with OSS CI configured and analyze the security properties.
 
 For the latest release and the dataset, check [here](https://github.com/ZJU-SEC/CIAnalyser/releases/tag/v3).
 
@@ -61,4 +61,16 @@ prepare for analysis:
   
 generate analysis report:
   analyze
+```
+
+## :book: Citation
+
+```
+@article{pan2022ambush,
+  title={Ambush from All Sides: Understanding Security Threats in Open-Source Software CI/CD Pipelines},
+  author={Pan, Ziyue and Shen, Wenbo and Wang, Xingkai and Yang, Yutian and Chang, Rui and Liu, Yao and Liu, Chengwei and Liu, Yang and Ren, Kui
+  journal={IEEE Transactions on Dependable and Secure Computing},
+  year={2023},
+  publisher={IEEE}
+}
 ```
